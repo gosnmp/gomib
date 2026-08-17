@@ -317,4 +317,40 @@ impliedOidValue OBJECT-TYPE
     DESCRIPTION "Value."
     ::= { impliedOidEntry 2 }
 
+-- Object-backed index with a resolved type but unresolved numeric identity.
+
+brokenOidTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BrokenOidEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Table with unresolved index object OID."
+    ::= { indexDecodeTables 9 }
+
+brokenOidEntry OBJECT-TYPE
+    SYNTAX BrokenOidEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Row."
+    INDEX { brokenOidIndex }
+    ::= { brokenOidTable 1 }
+
+BrokenOidEntry ::= SEQUENCE {
+    brokenOidIndex Integer32,
+    brokenOidValue Integer32
+}
+
+brokenOidIndex OBJECT-TYPE
+    SYNTAX Integer32 (1..10)
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Index with unresolved OID."
+    ::= { missingOidParent 1 }
+
+brokenOidValue OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "Value."
+    ::= { brokenOidEntry 2 }
+
 END

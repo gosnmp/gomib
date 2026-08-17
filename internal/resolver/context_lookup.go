@@ -134,15 +134,21 @@ func (c *resolverContext) resolveTypeForModule(mod *module.Module, name string) 
 	return c.tryWellKnownTypeFallbacks(name)
 }
 
-// resolveObject resolves a name to its Object, trying module-scoped
-// lookup first, then global fallback if strictness allows. Returns the
-// object and whether the name resolved to a node at all (needed for
-// diagnostic decisions when the object is nil).
-func (c *resolverContext) resolveObject(mod *module.Module, name string) (obj *model.Object, nodeFound bool) {
+// resolveObject resolves a name to its Object, trying module-scoped lookup
+// first, then global fallback if strictness allows. The boolean reports that
+// the name resolved to either an object or a node, allowing callers to
+// distinguish a node without an OBJECT-TYPE from an unknown name.
+func (c *resolverContext) resolveObject(mod *module.Module, name string) (obj *model.Object, symbolFound bool) {
+	if obj := c.lookupObject(mod, name); obj != nil {
+		return obj, true
+	}
 	if _, ok := c.lookupNode(mod, name); ok {
-		return c.lookupObject(mod, name), true
+		return nil, true
 	}
 	if c.ResolverStrictness().AllowGlobalFallbacks() {
+		if obj := c.mib.Object(name); obj != nil {
+			return obj, true
+		}
 		if node, ok := c.lookupNodeGlobal(name); ok {
 			return node.Object(), true
 		}

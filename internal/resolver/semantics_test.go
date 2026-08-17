@@ -2165,7 +2165,11 @@ func TestLinkObjectIndexes(t *testing.T) {
 
 		linkObjectIndexes(ctx, objRefs)
 
-		testutil.Len(t, rowObj.Index(), 0, "index entries should be empty when index node has no object")
+		indexes := rowObj.Index()
+		testutil.Len(t, indexes, 1, "unresolved index entry should retain declared arity")
+		testutil.Nil(t, indexes[0].Object, "unresolved index object")
+		testutil.Nil(t, indexes[0].Type, "unresolved index type")
+		testutil.Equal(t, "bareNode", indexes[0].TypeName, "unresolved index source name")
 
 		hasDiag(t, ctx.Diagnostics(), types.DiagIndexNotObject)
 	})
@@ -2479,7 +2483,10 @@ func TestLinkObjectIndexes(t *testing.T) {
 
 		linkObjectIndexes(ctx, objRefs)
 
-		testutil.Len(t, rowObj.Index(), 0, "strict mode should not resolve index via global fallback")
+		indexes := rowObj.Index()
+		testutil.Len(t, indexes, 1, "strict mode should retain an unresolved index placeholder")
+		testutil.Nil(t, indexes[0].Object, "strict mode should not resolve index via global fallback")
+		testutil.Equal(t, "foreignIndex", indexes[0].TypeName, "unresolved index source name")
 	})
 
 	t.Run("strict mode no global fallback for augments", func(t *testing.T) {

@@ -192,26 +192,18 @@ func (l OidLookup) Node() *Node { return l.node }
 // the matched node's OID. Empty when the input OID exactly matches a tree node.
 func (l OidLookup) Suffix() OID { return l.suffix }
 
-// DecodeIndexes decodes the instance suffix into typed index values.
-//
-// Uses the matched node's row INDEX clause to interpret the suffix arcs
-// per RFC 2578 section 7.7. Returns nil if the node has no associated
-// object, is not part of a table, or the row has no index definitions.
-//
-// See [DecodeSuffix] for the standalone function and encoding details.
-func (l OidLookup) DecodeIndexes() []DecodedIndex {
-	if l.node == nil {
-		return nil
+// DecodeIndexesExact compiles the matched column's effective index schema and
+// decodes the instance suffix exactly. Runtime plans should retain a compiled
+// IndexSchema instead of using this per-lookup convenience.
+func (l OidLookup) DecodeIndexesExact(options DecodeOptions) (*DecodedRowIndex, error) {
+	if l.node == nil || l.node.Object() == nil {
+		return nil, &IndexSchemaError{Reason: IndexSchemaInvalidObject, Position: -1, Detail: "lookup has no object"}
 	}
-	obj := l.node.Object()
-	if obj == nil {
-		return nil
+	schema, err := CompileIndexSchema(l.node.Object())
+	if err != nil {
+		return nil, err
 	}
-	indexes := obj.EffectiveIndexes()
-	if len(indexes) == 0 {
-		return nil
-	}
-	return DecodeSuffix(indexes, l.suffix)
+	return schema.DecodeExact(l.suffix, options)
 }
 
 // LookupInstance looks up a numeric OID and returns both the matched node
@@ -472,7 +464,9 @@ func (m *Mib) addModule(mod *Module) {
 func (m *Mib) addObject(obj *Object) {
 	m.objects = append(m.objects, obj)
 	current := m.objectByName[obj.name]
-	if obj.name != "" && (current == nil || obj.node != nil && current.node == obj.node && obj.node.obj == obj) {
+	if obj.name != "" && (current == nil ||
+		current.node == nil && obj.node != nil ||
+		obj.node != nil && current.node == obj.node && obj.node.obj == obj) {
 		m.objectByName[obj.name] = obj
 	}
 }

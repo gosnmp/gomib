@@ -183,6 +183,24 @@ func TestResolveObject(t *testing.T) {
 		testutil.True(t, nodeFound, "nodeFound should be true")
 	})
 
+	t.Run("falls back to global object without node when permissive", func(t *testing.T) {
+		ctx := newResolverContext(nil, model.ResolverPermissive, model.DefaultConfig())
+		resolvedA := model.NewModule("A")
+		resolvedB := model.NewModule("B")
+		ctx.moduleToResolved[modA] = resolvedA
+		ctx.moduleToResolved[modB] = resolvedB
+		ctx.modules = []*module.Module{modA, modB}
+
+		obj := model.NewObject("detached")
+		model.AddModuleObject(resolvedB, obj)
+		model.AddMibObject(ctx.mib, obj)
+		ctx.nodeSymbols[modB] = map[string]*model.Node{"detached": newTestNode("detached")}
+
+		got, symbolFound := ctx.resolveObject(modA, "detached")
+		testutil.Equal(t, obj, got, "should return detached object via global fallback")
+		testutil.True(t, symbolFound, "symbolFound should be true")
+	})
+
 	t.Run("does not use global fallback when normal strictness", func(t *testing.T) {
 		ctx := newTestContext() // model.ResolverNormal
 		resolvedA := model.NewModule("A")

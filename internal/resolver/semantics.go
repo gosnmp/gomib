@@ -17,8 +17,8 @@ import (
 func resolveSemantics(ctx *resolverContext) {
 	objRefs := collectObjectTypeRefs(ctx)
 	inferNodeKinds(ctx, objRefs)
-	resolveTableSemantics(ctx, objRefs)
 	createResolvedObjects(ctx, objRefs)
+	resolveTableSemantics(ctx, objRefs)
 	createResolvedNotifications(ctx)
 	createResolvedGroups(ctx)
 	createResolvedCompliances(ctx)
@@ -179,10 +179,10 @@ func resolveTableSemantics(ctx *resolverContext, objRefs []objectTypeRef) {
 
 		if len(obj.Index) > 0 {
 			for _, item := range obj.Index {
-				if _, ok := ctx.lookupNode(ref.mod, item.Object); !ok {
-					if isBareTypeIndex(item.Object) {
-						continue
-					}
+				if isBareTypeIndex(item.Object) {
+					continue
+				}
+				if indexObject, symbolFound := ctx.resolveObject(ref.mod, item.Object); indexObject == nil && !symbolFound {
 					ctx.recordUnresolved(types.DiagIndexUnresolved, ref.mod, item.Span,
 						fmt.Sprintf("unresolved INDEX: %q references unknown object %q", obj.Name, item.Object),
 						model.UnresolvedRef{Kind: model.UnresolvedIndex, Symbol: item.Object, Module: modName(ref.mod), Reason: reasonUnknownIndex})
@@ -191,7 +191,7 @@ func resolveTableSemantics(ctx *resolverContext, objRefs []objectTypeRef) {
 		}
 
 		if obj.Augments != "" {
-			if _, ok := ctx.lookupNode(ref.mod, obj.Augments); !ok {
+			if target, symbolFound := ctx.resolveObject(ref.mod, obj.Augments); target == nil && !symbolFound {
 				ctx.recordUnresolved(types.DiagOidOrphan, ref.mod, obj.Spans.Augments,
 					fmt.Sprintf("unresolved model.OID: %q references unknown parent %q", obj.Name, obj.Augments),
 					model.UnresolvedRef{Kind: model.UnresolvedOID, Symbol: obj.Augments, Module: modName(ref.mod), Reason: reasonUnknownParent})
@@ -205,10 +205,7 @@ func createResolvedObjects(ctx *resolverContext, objRefs []objectTypeRef) {
 	for _, ref := range objRefs {
 		obj := ref.obj
 
-		node, ok := ctx.lookupNode(ref.mod, obj.Name)
-		if !ok {
-			continue
-		}
+		node, _ := ctx.lookupNode(ref.mod, obj.Name)
 
 		resolved := model.NewObject(obj.Name)
 		model.SetObjectSpan(resolved, obj.Span)
@@ -221,7 +218,9 @@ func createResolvedObjects(ctx *resolverContext, objRefs []objectTypeRef) {
 		model.SetObjectAugmentsSpan(resolved, obj.Spans.Augments)
 		model.SetObjectDefaultValueSpan(resolved, obj.Spans.DefVal)
 		model.SetObjectOidRefs(resolved, extractOidRefs(obj.DefinitionOid()))
-		model.SetObjectNode(resolved, node)
+		if node != nil {
+			model.SetObjectNode(resolved, node)
+		}
 		if resolvedMod := ctx.moduleToResolved[ref.mod]; resolvedMod != nil {
 			model.SetObjectModule(resolved, resolvedMod)
 		}
@@ -257,7 +256,7 @@ func createResolvedObjects(ctx *resolverContext, objRefs []objectTypeRef) {
 		computeEffectiveValues(resolved)
 
 		// Preserve the SEQUENCE type name from the row's SYNTAX clause.
-		if node.Kind() == model.KindRow {
+		if node != nil && node.Kind() == model.KindRow {
 			if ref, ok := obj.Syntax.(*module.TypeSyntaxTypeRef); ok {
 				model.SetObjectSequenceTypeName(resolved, ref.Name)
 			}
@@ -267,20 +266,24 @@ func createResolvedObjects(ctx *resolverContext, objRefs []objectTypeRef) {
 		// (e.g., IF-MIB and RFC1213-MIB both define ifEntry). Select the node's
 		// preferred object before updating the global name index so same-name
 		// collisions use the same deterministic preference.
-		currentObj := node.Object()
-		var currentMod *model.Module
-		if currentObj != nil {
-			currentMod = currentObj.Module()
-		}
-		if shouldPreferModule(ctx, currentMod, ref.mod) {
-			model.SetNodeObject(node, resolved)
+		if node != nil {
+			currentObj := node.Object()
+			var currentMod *model.Module
+			if currentObj != nil {
+				currentMod = currentObj.Module()
+			}
+			if shouldPreferModule(ctx, currentMod, ref.mod) {
+				model.SetNodeObject(node, resolved)
+			}
 		}
 		model.AddMibObject(ctx.mib, resolved)
 		created++
 
 		if resolvedMod := ctx.moduleToResolved[ref.mod]; resolvedMod != nil {
 			model.AddModuleObject(resolvedMod, resolved)
-			model.AddModuleNodeNamed(resolvedMod, obj.Name, node)
+			if node != nil {
+				model.AddModuleNodeNamed(resolvedMod, obj.Name, node)
+			}
 		}
 	}
 
@@ -332,7 +335,9 @@ func linkObjectIndexes(ctx *resolverContext, objRefs []objectTypeRef) {
 						Span:     item.Span,
 					})
 				} else if isBareTypeIndex(item.Object) {
+					idxType, _ := ctx.resolveTypeForModule(ref.mod, item.Object)
 					indexEntries = append(indexEntries, model.IndexEntry{
+						Type:     idxType,
 						TypeName: item.Object,
 						Implied:  item.Implied,
 						Span:     item.Span,
@@ -341,6 +346,9 @@ func linkObjectIndexes(ctx *resolverContext, objRefs []objectTypeRef) {
 					ctx.EmitDiagnostic(types.DiagIndexNotObject,
 						ref.mod, obj.Span,
 						fmt.Sprintf("INDEX %q of %q resolves to a node without an object definition", item.Object, obj.Name))
+					indexEntries = append(indexEntries, model.IndexEntry{TypeName: item.Object, Implied: item.Implied, Span: item.Span})
+				} else {
+					indexEntries = append(indexEntries, model.IndexEntry{TypeName: item.Object, Implied: item.Implied, Span: item.Span})
 				}
 			}
 			model.SetObjectIndex(resolvedObj, indexEntries)

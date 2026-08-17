@@ -12,7 +12,7 @@ func TestIndexValueString(t *testing.T) {
 		value IndexValue
 		want  string
 	}{
-		{"integer", IndexValue{kind: IndexValueInteger, value: uint32(42)}, "42"},
+		{"integer", NewInteger32IndexValue(42), "42"},
 		{"ip", IndexValue{kind: IndexValueIpAddress, value: [4]byte{192, 168, 1, 1}}, "192.168.1.1"},
 		{"printable string", IndexValue{kind: IndexValueOctetString, value: []byte("eth0")}, "eth0"},
 		{"binary string", IndexValue{kind: IndexValueOctetString, value: []byte{0x00, 0xFF}}, "00:FF"},
@@ -26,11 +26,11 @@ func TestIndexValueString(t *testing.T) {
 }
 
 func TestIndexValueAccessors(t *testing.T) {
-	t.Run("Integer", func(t *testing.T) {
-		v := IndexValue{kind: IndexValueInteger, value: uint32(42)}
-		n, ok := v.Integer()
-		testutil.True(t, ok, "Integer() ok")
-		testutil.Equal(t, uint32(42), n, "Integer() value")
+	t.Run("Integer32", func(t *testing.T) {
+		v := NewInteger32IndexValue(42)
+		n, ok := v.Signed()
+		testutil.True(t, ok, "Signed() ok")
+		testutil.Equal(t, int32(42), n, "Signed() value")
 
 		_, ok = v.IpAddress()
 		testutil.True(t, !ok, "IpAddress() should be false")
@@ -61,12 +61,4 @@ func TestIndexValueAccessors(t *testing.T) {
 		testutil.True(t, ok, "OID() ok")
 		testutil.Equal(t, 4, len(oid), "OID() length")
 	})
-}
-
-func TestDecodedIndexString(t *testing.T) {
-	d := DecodedIndex{
-		name:  "ifIndex",
-		value: IndexValue{kind: IndexValueInteger, value: uint32(7)},
-	}
-	testutil.Equal(t, "ifIndex=7", d.String(), "DecodedIndex.String()")
 }

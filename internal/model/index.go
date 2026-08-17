@@ -12,23 +12,41 @@ import (
 type IndexValueKind int
 
 const (
-	IndexValueInteger          IndexValueKind = iota + 1 // single-arc integer
-	IndexValueIpAddress                                  // four-arc IPv4 address
+	IndexValueIpAddress        IndexValueKind = iota + 1 // four-arc IPv4 address
 	IndexValueOctetString                                // octet string (fixed, length-prefixed, or implied)
 	IndexValueObjectIdentifier                           // sub-OID (length-prefixed or implied)
+	IndexValueInteger32
+	IndexValueUnsigned32
+	IndexValueGauge32
+	IndexValueTimeTicks
+	IndexValueCounter32
+	IndexValueBits
+	IndexValueOpaque
 )
 
 // String returns a short name for the kind.
 func (k IndexValueKind) String() string {
 	switch k {
-	case IndexValueInteger:
-		return "integer"
 	case IndexValueIpAddress:
 		return "ip-address"
 	case IndexValueOctetString:
 		return "octet-string"
 	case IndexValueObjectIdentifier:
 		return "object-identifier"
+	case IndexValueInteger32:
+		return "integer32"
+	case IndexValueUnsigned32:
+		return "unsigned32"
+	case IndexValueGauge32:
+		return "gauge32"
+	case IndexValueTimeTicks:
+		return "timeticks"
+	case IndexValueCounter32:
+		return "counter32"
+	case IndexValueBits:
+		return "bits"
+	case IndexValueOpaque:
+		return "opaque"
 	default:
 		return "unknown"
 	}
@@ -36,30 +54,89 @@ func (k IndexValueKind) String() string {
 
 // IndexValue is a typed value decoded from OID instance suffix arcs.
 //
-// The kind is determined by the index component's [IndexEncoding] and
-// base type, following RFC 2578 section 7.7:
+// The kind is determined by the compiled index schema and base type,
+// following RFC 2578 section 7.7:
 //
-//   - Integer types produce [IndexValueInteger] (one arc).
+//   - Integer types retain their precise semantic application kind.
 //   - IpAddress produces [IndexValueIpAddress] (four arcs).
-//   - OCTET STRING / Opaque / BITS produce [IndexValueOctetString],
-//     either fixed-length, length-prefixed, or implied.
+//   - OCTET STRING, Opaque, and BITS retain their precise semantic kind and
+//     are fixed-length, length-prefixed, or implied.
 //   - OBJECT IDENTIFIER produces [IndexValueObjectIdentifier],
 //     either length-prefixed or implied.
 type IndexValue struct {
 	kind  IndexValueKind
-	value any // uint32 | [4]byte | []byte | OID
+	value any // int32 | uint32 | [4]byte | []byte | OID
 }
 
 // Kind returns the type of the index value.
 func (v IndexValue) Kind() IndexValueKind { return v.kind }
 
-// Integer returns the integer value and true if this is an integer index,
-// or (0, false) otherwise.
-func (v IndexValue) Integer() (uint32, bool) {
-	if v.kind == IndexValueInteger {
-		return v.value.(uint32), true
+// NewInteger32IndexValue returns a signed Integer32 index value.
+func NewInteger32IndexValue(value int32) IndexValue {
+	return IndexValue{kind: IndexValueInteger32, value: value}
+}
+
+// NewUnsigned32IndexValue returns an Unsigned32 index value.
+func NewUnsigned32IndexValue(value uint32) IndexValue {
+	return IndexValue{kind: IndexValueUnsigned32, value: value}
+}
+
+// NewGauge32IndexValue returns a Gauge32 index value.
+func NewGauge32IndexValue(value uint32) IndexValue {
+	return IndexValue{kind: IndexValueGauge32, value: value}
+}
+
+// NewTimeTicksIndexValue returns a TimeTicks index value.
+func NewTimeTicksIndexValue(value uint32) IndexValue {
+	return IndexValue{kind: IndexValueTimeTicks, value: value}
+}
+
+// NewCounter32IndexValue returns a mechanically representable Counter32 index value.
+func NewCounter32IndexValue(value uint32) IndexValue {
+	return IndexValue{kind: IndexValueCounter32, value: value}
+}
+
+// NewIpAddressIndexValue returns an IPv4 index value.
+func NewIpAddressIndexValue(value [4]byte) IndexValue {
+	return IndexValue{kind: IndexValueIpAddress, value: value}
+}
+
+// NewOctetStringIndexValue returns an owned OCTET STRING index value.
+func NewOctetStringIndexValue(value []byte) IndexValue {
+	return IndexValue{kind: IndexValueOctetString, value: slices.Clone(value)}
+}
+
+// NewBitsIndexValue returns an owned BITS index value.
+func NewBitsIndexValue(value []byte) IndexValue {
+	return IndexValue{kind: IndexValueBits, value: slices.Clone(value)}
+}
+
+// NewOpaqueIndexValue returns an owned Opaque index value.
+func NewOpaqueIndexValue(value []byte) IndexValue {
+	return IndexValue{kind: IndexValueOpaque, value: slices.Clone(value)}
+}
+
+// NewObjectIdentifierIndexValue returns an owned OBJECT IDENTIFIER index value.
+func NewObjectIdentifierIndexValue(value OID) IndexValue {
+	return IndexValue{kind: IndexValueObjectIdentifier, value: slices.Clone(value)}
+}
+
+// Signed returns an Integer32 value.
+func (v IndexValue) Signed() (int32, bool) {
+	if v.kind == IndexValueInteger32 {
+		return v.value.(int32), true
 	}
 	return 0, false
+}
+
+// Unsigned returns an unsigned integer-like index value.
+func (v IndexValue) Unsigned() (uint32, bool) {
+	switch v.kind {
+	case IndexValueUnsigned32, IndexValueGauge32, IndexValueTimeTicks, IndexValueCounter32:
+		return v.value.(uint32), true
+	default:
+		return 0, false
+	}
 }
 
 // IpAddress returns the four-octet IPv4 address and true if this is an
@@ -83,7 +160,7 @@ func (v IndexValue) IP() net.IP {
 
 // Bytes returns the octet string value and true, or (nil, false).
 func (v IndexValue) Bytes() ([]byte, bool) {
-	if v.kind == IndexValueOctetString {
+	if v.kind == IndexValueOctetString || v.kind == IndexValueBits || v.kind == IndexValueOpaque {
 		return slices.Clone(v.value.([]byte)), true
 	}
 	return nil, false
@@ -100,12 +177,14 @@ func (v IndexValue) OID() (OID, bool) {
 // String returns a human-readable representation of the value.
 func (v IndexValue) String() string {
 	switch v.kind {
-	case IndexValueInteger:
+	case IndexValueInteger32:
+		return strconv.FormatInt(int64(v.value.(int32)), 10)
+	case IndexValueUnsigned32, IndexValueGauge32, IndexValueTimeTicks, IndexValueCounter32:
 		return strconv.FormatUint(uint64(v.value.(uint32)), 10)
 	case IndexValueIpAddress:
 		b := v.value.([4]byte)
 		return net.IPv4(b[0], b[1], b[2], b[3]).String()
-	case IndexValueOctetString:
+	case IndexValueOctetString, IndexValueBits, IndexValueOpaque:
 		data := v.value.([]byte)
 		if isPrintableASCII(data) {
 			return string(data)
@@ -137,139 +216,6 @@ func isPrintableASCII(data []byte) bool {
 	return true
 }
 
-// DecodedIndex is a single decoded index component from an instance OID suffix.
-// It pairs the index component name (from the INDEX clause) with the
-// decoded [IndexValue].
-type DecodedIndex struct {
-	name  string
-	value IndexValue
-}
-
-// Name returns the index component name from the INDEX clause (e.g. "ifIndex").
-func (d DecodedIndex) Name() string { return d.name }
-
-// Value returns the decoded value.
-func (d DecodedIndex) Value() IndexValue { return d.value }
-
-// String returns a "name=value" representation.
-func (d DecodedIndex) String() string {
-	return d.name + "=" + d.value.String()
-}
-
-// DecodeSuffix decodes an OID instance suffix into typed index values.
-//
-// Takes the index entries from a row's effective INDEX clause and the raw
-// suffix arcs (the portion of an instance OID that follows the column or
-// row OID). Returns one [DecodedIndex] per successfully decoded component.
-//
-// Decoding stops early if:
-//   - The suffix arcs are exhausted before all indexes are decoded
-//   - An index component has [IndexEncodingUnknown]
-//   - A fixed-size index has no determinable SIZE constraint
-//   - There are not enough arcs for a component
-//   - An octet-valued arc (IpAddress, OCTET STRING) exceeds 255
-//
-// Encoding rules (RFC 2578 section 7.7):
-//
-//   - Integer: 1 arc (single sub-identifier)
-//   - IpAddress: 4 arcs (one per octet)
-//   - FixedString: n arcs (n = fixed SIZE constraint)
-//   - LengthPrefixed: 1 + n arcs (first arc is length)
-//   - Implied: remaining arcs (last index only)
-func DecodeSuffix(indexes []IndexEntry, suffix OID) []DecodedIndex {
-	var result []DecodedIndex
-	pos := 0
-
-	for _, idx := range indexes {
-		if pos >= len(suffix) {
-			break
-		}
-
-		name := indexName(idx)
-		var value IndexValue
-		var consumed int
-
-		switch idx.Encoding {
-		case IndexEncodingInteger:
-			value = IndexValue{kind: IndexValueInteger, value: suffix[pos]}
-			consumed = 1
-
-		case IndexEncodingIpAddress:
-			if pos+4 > len(suffix) {
-				return result
-			}
-			bytes, ok := arcsToBytes(suffix[pos : pos+4])
-			if !ok {
-				return result
-			}
-			value = IndexValue{kind: IndexValueIpAddress, value: [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}}
-			consumed = 4
-
-		case IndexEncodingFixedString:
-			size, _ := idx.FixedSize()
-			if size == 0 || pos+size > len(suffix) {
-				return result
-			}
-			bytes, ok := arcsToBytes(suffix[pos : pos+size])
-			if !ok {
-				return result
-			}
-			value = IndexValue{kind: IndexValueOctetString, value: bytes}
-			consumed = size
-
-		case IndexEncodingLengthPrefixed:
-			length := int(suffix[pos])
-			if pos+1+length > len(suffix) {
-				return result
-			}
-			data := suffix[pos+1 : pos+1+length]
-			if isOIDBaseType(idx) {
-				arcs := make(OID, len(data))
-				copy(arcs, data)
-				value = IndexValue{kind: IndexValueObjectIdentifier, value: arcs}
-			} else {
-				bytes, ok := arcsToBytes(data)
-				if !ok {
-					return result
-				}
-				value = IndexValue{kind: IndexValueOctetString, value: bytes}
-			}
-			consumed = 1 + length
-
-		case IndexEncodingImplied:
-			remaining := suffix[pos:]
-			if isOIDBaseType(idx) {
-				arcs := make(OID, len(remaining))
-				copy(arcs, remaining)
-				value = IndexValue{kind: IndexValueObjectIdentifier, value: arcs}
-			} else {
-				bytes, ok := arcsToBytes(remaining)
-				if !ok {
-					return result
-				}
-				value = IndexValue{kind: IndexValueOctetString, value: bytes}
-			}
-			consumed = len(remaining)
-
-		default:
-			return result
-		}
-
-		result = append(result, DecodedIndex{name: name, value: value})
-		pos += consumed
-	}
-
-	return result
-}
-
-// indexName returns the name for an index entry.
-func indexName(idx IndexEntry) string {
-	if idx.Object != nil {
-		return idx.Object.Name()
-	}
-	return idx.TypeName
-}
-
 // arcsToBytes converts OID arcs to bytes, returning false if any arc exceeds 255.
 func arcsToBytes(arcs []uint32) ([]byte, bool) {
 	bytes := make([]byte, len(arcs))
@@ -280,16 +226,4 @@ func arcsToBytes(arcs []uint32) ([]byte, bool) {
 		bytes[i] = byte(a)
 	}
 	return bytes, true
-}
-
-// isOIDBaseType reports whether the index entry's effective base type is ObjectIdentifier.
-func isOIDBaseType(idx IndexEntry) bool {
-	if idx.Object == nil {
-		return false
-	}
-	t := idx.Object.Type()
-	if t == nil {
-		return false
-	}
-	return t.EffectiveBase() == BaseObjectIdentifier
 }

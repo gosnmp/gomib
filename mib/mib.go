@@ -155,23 +155,148 @@ func FormatOctets(hint string, data []byte, hexCase HexCase) (string, bool) {
 	return model.FormatOctets(hint, data, hexCase)
 }
 
-// --- Index decoding ---
+// --- Index schemas and codecs ---
 
 type (
-	IndexValueKind = model.IndexValueKind
-	IndexValue     = model.IndexValue
-	DecodedIndex   = model.DecodedIndex
+	IndexValueKind           = model.IndexValueKind
+	IndexValue               = model.IndexValue
+	ConstraintState          = model.ConstraintState
+	ConstraintResult         = model.ConstraintResult
+	ConstraintMode           = model.ConstraintMode
+	IncompleteConstraintMode = model.IncompleteConstraintMode
+	IndexRange               = model.IndexRange
+	IncompleteIndexRange     = model.IncompleteIndexRange
+	IndexConstraint          = model.IndexConstraint
+	IndexFraming             = model.IndexFraming
+	IndexWireKind            = model.IndexWireKind
+	IntegerIndexKind         = model.IntegerIndexKind
+	OctetIndexKind           = model.OctetIndexKind
+	IndexWireType            = model.IndexWireType
+	IndexSchemaIssueCode     = model.IndexSchemaIssueCode
+	IndexSchemaIssue         = model.IndexSchemaIssue
+	IndexComponentSchema     = model.IndexComponentSchema
+	IndexSchema              = model.IndexSchema
+	BoundIndexCodec          = model.BoundIndexCodec
+	IndexSchemaErrorReason   = model.IndexSchemaErrorReason
+	IndexSchemaError         = model.IndexSchemaError
+	DecodeOptions            = model.DecodeOptions
+	EncodeOptions            = model.EncodeOptions
+	IndexConstraintViolation = model.IndexConstraintViolation
+	DecodedIndexComponent    = model.DecodedIndexComponent
+	DecodedRowIndex          = model.DecodedRowIndex
+	IndexDecodeErrorReason   = model.IndexDecodeErrorReason
+	IndexDecodeError         = model.IndexDecodeError
+	IndexSuffix              = model.IndexSuffix
+	IndexEncodeErrorReason   = model.IndexEncodeErrorReason
+	IndexEncodeError         = model.IndexEncodeError
+	EncodedIndex             = model.EncodedIndex
 )
 
+const MaxInstanceOIDArcs = model.MaxInstanceOIDArcs
+
 const (
-	IndexValueInteger          = model.IndexValueInteger
 	IndexValueIpAddress        = model.IndexValueIpAddress
 	IndexValueOctetString      = model.IndexValueOctetString
 	IndexValueObjectIdentifier = model.IndexValueObjectIdentifier
+	IndexValueInteger32        = model.IndexValueInteger32
+	IndexValueUnsigned32       = model.IndexValueUnsigned32
+	IndexValueGauge32          = model.IndexValueGauge32
+	IndexValueTimeTicks        = model.IndexValueTimeTicks
+	IndexValueCounter32        = model.IndexValueCounter32
+	IndexValueBits             = model.IndexValueBits
+	IndexValueOpaque           = model.IndexValueOpaque
 )
 
-func DecodeSuffix(indexes []IndexEntry, suffix OID) []DecodedIndex {
-	return model.DecodeSuffix(indexes, suffix)
+const (
+	ConstraintUnspecified      = model.ConstraintUnspecified
+	ConstraintKnown            = model.ConstraintKnown
+	ConstraintIncomplete       = model.ConstraintIncomplete
+	ConstraintEmpty            = model.ConstraintEmpty
+	ConstraintValid            = model.ConstraintValid
+	ConstraintInvalid          = model.ConstraintInvalid
+	ConstraintIndeterminate    = model.ConstraintIndeterminate
+	ConstraintEnforce          = model.ConstraintEnforce
+	ConstraintReport           = model.ConstraintReport
+	IncompleteConstraintAllow  = model.IncompleteConstraintAllow
+	IncompleteConstraintReject = model.IncompleteConstraintReject
+)
+
+const (
+	IndexFramingNone           = model.IndexFramingNone
+	IndexFramingFixed          = model.IndexFramingFixed
+	IndexFramingLengthPrefixed = model.IndexFramingLengthPrefixed
+	IndexFramingImplied        = model.IndexFramingImplied
+	IndexWireInteger           = model.IndexWireInteger
+	IndexWireIpAddress         = model.IndexWireIpAddress
+	IndexWireOctets            = model.IndexWireOctets
+	IndexWireObjectIdentifier  = model.IndexWireObjectIdentifier
+	IntegerIndexInteger32      = model.IntegerIndexInteger32
+	IntegerIndexUnsigned32     = model.IntegerIndexUnsigned32
+	IntegerIndexGauge32        = model.IntegerIndexGauge32
+	IntegerIndexTimeTicks      = model.IntegerIndexTimeTicks
+	IntegerIndexCounter32      = model.IntegerIndexCounter32
+	OctetIndexOctetString      = model.OctetIndexOctetString
+	OctetIndexBits             = model.OctetIndexBits
+	OctetIndexOpaque           = model.OctetIndexOpaque
+)
+
+const (
+	IndexSchemaCounter32Extension        = model.IndexSchemaCounter32Extension
+	IndexSchemaUnrepresentableConstraint = model.IndexSchemaUnrepresentableConstraint
+	IndexSchemaUnrepresentableEnum       = model.IndexSchemaUnrepresentableEnum
+	IndexSchemaImpliedOctetsMayBeEmpty   = model.IndexSchemaImpliedOctetsMayBeEmpty
+	IndexSchemaUnresolvedObjectIdentity  = model.IndexSchemaUnresolvedObjectIdentity
+	IndexSchemaZeroWidthComponent        = model.IndexSchemaZeroWidthComponent
+	IndexSchemaZeroWidthIndex            = model.IndexSchemaZeroWidthIndex
+	IndexSchemaNoIndexes                 = model.IndexSchemaNoIndexes
+	IndexSchemaInvalidObject             = model.IndexSchemaInvalidObject
+	IndexSchemaUnresolvedType            = model.IndexSchemaUnresolvedType
+	IndexSchemaUnsupportedType           = model.IndexSchemaUnsupportedType
+	IndexSchemaInvalidImplied            = model.IndexSchemaInvalidImplied
+	IndexSchemaEmptyConstraint           = model.IndexSchemaEmptyConstraint
+	IndexSchemaOverflow                  = model.IndexSchemaOverflow
+)
+
+const (
+	IndexDecodeInvalidLimit        = model.IndexDecodeInvalidLimit
+	IndexDecodeSuffixTooLong       = model.IndexDecodeSuffixTooLong
+	IndexDecodeTruncated           = model.IndexDecodeTruncated
+	IndexDecodeLengthExceedsLimit  = model.IndexDecodeLengthExceedsLimit
+	IndexDecodeInvalidOctet        = model.IndexDecodeInvalidOctet
+	IndexDecodePrimitiveDomain     = model.IndexDecodePrimitiveDomain
+	IndexDecodeTrailingArcs        = model.IndexDecodeTrailingArcs
+	IndexDecodeConstraintViolation = model.IndexDecodeConstraintViolation
+	IndexEncodeInvalidLimit        = model.IndexEncodeInvalidLimit
+	IndexEncodeWrongArity          = model.IndexEncodeWrongArity
+	IndexEncodeWrongValueKind      = model.IndexEncodeWrongValueKind
+	IndexEncodePrimitiveDomain     = model.IndexEncodePrimitiveDomain
+	IndexEncodeConstraintViolation = model.IndexEncodeConstraintViolation
+	IndexEncodeSuffixTooLong       = model.IndexEncodeSuffixTooLong
+)
+
+func CompileIndexSchema(object *Object) (*IndexSchema, error) {
+	return model.CompileIndexSchema(object)
+}
+
+func NewBoundIndexCodec(schema *IndexSchema, objectOID OID, maxInstanceArcs int) (*BoundIndexCodec, error) {
+	return model.NewBoundIndexCodec(schema, objectOID, maxInstanceArcs)
+}
+
+func BindIndexSchema(schema *IndexSchema, object *Object) (*BoundIndexCodec, error) {
+	return model.BindIndexSchema(schema, object)
+}
+
+func NewInteger32IndexValue(value int32) IndexValue    { return model.NewInteger32IndexValue(value) }
+func NewUnsigned32IndexValue(value uint32) IndexValue  { return model.NewUnsigned32IndexValue(value) }
+func NewGauge32IndexValue(value uint32) IndexValue     { return model.NewGauge32IndexValue(value) }
+func NewTimeTicksIndexValue(value uint32) IndexValue   { return model.NewTimeTicksIndexValue(value) }
+func NewCounter32IndexValue(value uint32) IndexValue   { return model.NewCounter32IndexValue(value) }
+func NewIpAddressIndexValue(value [4]byte) IndexValue  { return model.NewIpAddressIndexValue(value) }
+func NewOctetStringIndexValue(value []byte) IndexValue { return model.NewOctetStringIndexValue(value) }
+func NewBitsIndexValue(value []byte) IndexValue        { return model.NewBitsIndexValue(value) }
+func NewOpaqueIndexValue(value []byte) IndexValue      { return model.NewOpaqueIndexValue(value) }
+func NewObjectIdentifierIndexValue(value OID) IndexValue {
+	return model.NewObjectIdentifierIndexValue(value)
 }
 
 // NameRefNames returns just the name strings from a slice of NameRefs.

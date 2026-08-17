@@ -296,7 +296,10 @@ func TestMissingImportFailsInStrictMode(t *testing.T) {
 	testutil.Greater(t, oidUnresolved, 0, "strict mode should have unresolved OID references")
 
 	testObj := m.Object("testObject")
-	testutil.Nil(t, testObj, "testObject should not resolve in strict mode")
+	testutil.NotNil(t, testObj, "testObject definition should be retained in strict mode")
+	if testObj != nil {
+		testutil.Nil(t, testObj.Node(), "testObject OID node should remain unresolved in strict mode")
+	}
 }
 
 func TestMissingImportWorksInPermissiveMode(t *testing.T) {

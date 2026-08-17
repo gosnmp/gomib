@@ -245,6 +245,12 @@ func (o *Object) EffectiveIndexes() []IndexEntry {
 	return o.effectiveIndexes(make(map[*Object]struct{}))
 }
 
+// CompileIndexSchema copies this row or column's effective INDEX metadata into
+// an owned bidirectional codec.
+func (o *Object) CompileIndexSchema() (*IndexSchema, error) {
+	return CompileIndexSchema(o)
+}
+
 func (o *Object) effectiveIndexes(visited map[*Object]struct{}) []IndexEntry {
 	if o.node == nil {
 		return nil

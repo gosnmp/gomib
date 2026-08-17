@@ -174,6 +174,21 @@ func TestGlobalEntitySameNameUsesNodePreference(t *testing.T) {
 	}
 }
 
+func TestGlobalObjectLookupPrefersResolvedIdentity(t *testing.T) {
+	m := NewMib()
+	detached := NewObject("duplicateName")
+	node := &Node{}
+	attached := NewObject("duplicateName")
+	attached.setNode(node)
+	node.setObject(attached)
+
+	m.addObject(detached)
+	m.addObject(attached)
+
+	testutil.Equal(t, attached, m.Object("duplicateName"), "node-backed object")
+	testutil.Len(t, m.Objects(), 2, "all object definitions")
+}
+
 func TestNodeLookupPriority(t *testing.T) {
 	m := NewMib()
 

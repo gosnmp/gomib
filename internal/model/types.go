@@ -213,10 +213,12 @@ type Revision struct {
 }
 
 // IndexEntry describes an index component for a table row.
-// Exactly one of Object or TypeName is set: Object for object-reference
-// indexes, TypeName for bare-type indexes (e.g. INDEX { INTEGER }).
+// Object is set for object-reference indexes. Type and TypeName are set for
+// bare-type indexes (e.g. INDEX { INTEGER }). Unresolved entries retain their
+// source name with both Object and Type nil.
 type IndexEntry struct {
 	Object   *Object       // nil for bare type indexes
+	Type     *Type         // resolved type for bare type indexes
 	TypeName string        // non-empty for bare type indexes
 	Implied  bool          // IMPLIED keyword present
 	Encoding IndexEncoding // RFC 2578 s7.7 encoding classification, set during resolution

@@ -35,11 +35,11 @@ func TestOIDGlobalRootStrictness(t *testing.T) {
 	tests := []struct {
 		strictnessCase
 		wantUnresolved bool
-		wantObject     bool
+		wantNode       bool
 	}{
 		{strictnessCase: strictnessCase{name: "strict", level: mib.ResolverStrict}, wantUnresolved: true},
-		{strictnessCase: strictnessCase{name: "normal", level: mib.ResolverNormal}, wantObject: true},
-		{strictnessCase: strictnessCase{name: "permissive", level: mib.ResolverPermissive}, wantObject: true},
+		{strictnessCase: strictnessCase{name: "normal", level: mib.ResolverNormal}, wantNode: true},
+		{strictnessCase: strictnessCase{name: "permissive", level: mib.ResolverPermissive}, wantNode: true},
 	}
 
 	for _, tt := range tests {
@@ -51,15 +51,14 @@ func TestOIDGlobalRootStrictness(t *testing.T) {
 				"unexpected unresolved state for enterprises at %s", tt.name)
 
 			obj := m.Object("testObject")
-			if !tt.wantObject {
-				testutil.Nil(t, obj, "testObject should not resolve at %s", tt.name)
-				return
-			}
-
-			testutil.NotNil(t, obj, "testObject should resolve at %s", tt.name)
-			if obj != nil {
+			testutil.NotNil(t, obj, "testObject definition at %s", tt.name)
+			if obj != nil && tt.wantNode {
+				testutil.NotNil(t, obj.Node(), "testObject node at %s", tt.name)
 				testutil.Equal(t, "1.3.6.1.4.1.99999.1", obj.OID().String(),
 					"testObject OID at %s", tt.name)
+			} else if obj != nil {
+				testutil.Nil(t, obj.Node(), "testObject node at %s", tt.name)
+				testutil.Nil(t, obj.OID(), "testObject OID at %s", tt.name)
 			}
 		})
 	}

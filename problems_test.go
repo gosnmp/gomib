@@ -1137,7 +1137,11 @@ func TestProblemImportsAliasStrict(t *testing.T) {
 		"aliases should not resolve at strict level")
 
 	str := m.Object("problemAliasString")
-	testutil.Nil(t, str, "objects should not resolve via aliased imports at strict level")
+	testutil.NotNil(t, str, "object definition should be retained at strict level")
+	if str != nil {
+		testutil.Nil(t, str.Node(), "OID should not resolve via aliased imports at strict level")
+		testutil.Nil(t, str.Type(), "type should not resolve via aliased imports at strict level")
+	}
 }
 
 // TestProblemNamingUppercase verifies that uppercase-starting identifiers

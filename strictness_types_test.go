@@ -184,8 +184,16 @@ func TestModuleAliasStrictness(t *testing.T) {
 
 			testutil.True(t, len(unresolvedImports) > 0,
 				"strict mode should keep aliased imports unresolved")
-			testutil.Nil(t, str, "problemAliasString should not resolve in strict mode")
-			testutil.Nil(t, intObj, "problemAliasInteger should not resolve in strict mode")
+			testutil.NotNil(t, str, "problemAliasString definition should be retained")
+			testutil.NotNil(t, intObj, "problemAliasInteger definition should be retained")
+			if str != nil {
+				testutil.Nil(t, str.Node(), "problemAliasString node should remain unresolved")
+				testutil.Nil(t, str.Type(), "problemAliasString type should remain unresolved")
+			}
+			if intObj != nil {
+				testutil.Nil(t, intObj.Node(), "problemAliasInteger node should remain unresolved")
+				testutil.Nil(t, intObj.Type(), "problemAliasInteger type should remain unresolved")
+			}
 		})
 	}
 }
