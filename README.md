@@ -131,7 +131,7 @@ Other lookup methods: `Node`, `Type`, `Notification`, `Group`, `Compliance`, `Ca
 sym := m.Symbol("ifIndex")       // returns a Symbol wrapping any definition kind
 sym.Name()                       // "ifIndex"
 sym.Object()                     // *Object (or nil if not an OBJECT-TYPE)
-sym.Node()                       // *Node
+sym.Node()                       // *Node (or nil if its numeric OID is unresolved)
 sym.IsZero()                     // true if nothing was found
 ```
 
@@ -177,7 +177,15 @@ node  = m.LongestPrefixByOID(oid)   // longest matching prefix
 lookup := m.LookupInstance(oid)
 lookup.Node().Name()   // "ifIndex"
 lookup.Suffix()        // OID{5} (trailing arcs after the matched node)
+
+decoded, err := lookup.DecodeIndexesExact(mib.DecodeOptions{
+    MaxSuffixArcs: mib.MaxInstanceOIDArcs - len(lookup.Node().OID()),
+    ConstraintMode: mib.ConstraintEnforce,
+})
 ```
+
+`DecodeIndexesExact` is a per-lookup convenience. Runtime plans should compile
+and retain an owned schema and codec as shown below.
 
 ### Module-scoped queries
 
@@ -270,7 +278,9 @@ node.Reference()   // reference string
 
 ## Objects
 
-Each `Object` carries its type, access level, status, and position in the OID tree:
+Each `Object` carries its type, access level, and status. `Node()` and `OID()`
+are nil when the definition was retained but its numeric OID could not be
+resolved:
 
 ```go
 obj := m.Object("ifType")
@@ -301,6 +311,49 @@ for _, idx := range idxs {
 ```
 
 Navigate from any level: `obj.Table()` returns the containing table, `obj.Row()` returns the containing row.
+
+Compile an owned index schema while the MIB is available, then bind it to the
+destination column's OID. Exact decoding rejects malformed, truncated, and
+trailing arcs; canonical encoding validates arity, value kinds, constraints,
+and the complete instance-OID limit.
+
+```go
+column := m.Object("ifDescr")
+schema, err := column.CompileIndexSchema()
+if err != nil {
+    log.Fatal(err)
+}
+
+// Representable MIB concerns remain visible without preventing compilation.
+for _, issue := range schema.Issues() {
+    log.Printf("index schema: %s", issue.Message)
+}
+for _, component := range schema.Components() {
+    for _, issue := range component.Issues() {
+        log.Printf("index component %s: %s", component.Name(), issue.Message)
+    }
+}
+
+codec, err := mib.BindIndexSchema(schema, column)
+if err != nil {
+    log.Fatal(err)
+}
+
+decoded, err := codec.DecodeExact(mib.OID{7}, mib.ConstraintEnforce)
+if err != nil {
+    log.Fatal(err)
+}
+value, _ := decoded.Values()[0].Signed() // 7
+
+encoded, err := codec.EncodeCanonical(
+    []mib.IndexValue{mib.NewInteger32IndexValue(value)},
+    mib.IncompleteConstraintReject,
+)
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(encoded.Suffix().OID()) // 7
+```
 
 ### Effective constraints
 

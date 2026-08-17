@@ -576,10 +576,11 @@ Key operations:
   declared explicitly in MIB files - it's inferred from patterns (a table
   node has SEQUENCE OF syntax, its single child is the row, the row's children
   are columns).
-- **Object creation:** Attach resolved Objects to nodes with type, access,
-  units, constraints. Compute effective values by walking type chains. Sizes
-  and ranges intersect declared constraints with inherited constraints; an
-  empty effective constraint remains distinguished from no constraint.
+- **Object creation:** Retain every OBJECT-TYPE definition with its type,
+  access, units, and constraints, and attach definitions whose numeric OIDs
+  resolve to tree nodes. Compute effective values by walking type chains.
+  Sizes and ranges intersect declared constraints with inherited constraints;
+  an empty effective constraint remains distinguished from no constraint.
   Unresolved endpoints are preserved conservatively when an intersection
   cannot be determined. Display hints, enums, and bits use inherited values
   when the object does not declare their replacement.
@@ -734,7 +735,11 @@ cloned copies. The Mib is safe for concurrent reads.
   what construct is at a given position (import, OID ref, syntax, definition).
 - **Object** - OBJECT-TYPE. Type, access, status, units, description, DEFVAL,
   index entries, AUGMENTS links. Effective values (hint, sizes, ranges, enums,
-  bits) computed by walking type chains.
+  bits) computed by walking type chains. `Node()` and `OID()` are nil when the
+  numeric identity is unresolved.
+- **IndexSchema / BoundIndexCodec** - Owned effective INDEX metadata and an
+  object-specific suffix budget for exact decoding and canonical encoding.
+  Schema and component issues retain representable MIB concerns.
 - **Type** - Type definition. Base type, parent chain, status, display hint,
   constraints, enums/bits. `Effective*()` methods walk parent chain.
 - **Notification** - NOTIFICATION-TYPE or TRAP-TYPE. Object members, optional

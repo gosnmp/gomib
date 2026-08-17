@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- Replace partial `DecodeSuffix` and `OidLookup.DecodeIndexes` decoding with owned `IndexSchema` metadata, exact bounded decoding, and canonical encoding
+- Preserve precise integer and octet index value kinds instead of collapsing them into generic integer and octet-string variants
+- Retain `OBJECT-TYPE` definitions whose numeric OIDs do not resolve; callers must allow `Object.Node()` and `Object.OID()` to return nil
+
+### Added
+
+- Add reusable object-bound index codecs, normalized effective constraints, component raw arcs, and typed codec failures
+- Retain representable component and whole-schema concerns, including unresolved object identities and zero-width indexes
+
 ## [0.13.2] - 2026-08-13
 
 ### Changed

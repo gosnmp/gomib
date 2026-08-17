@@ -97,6 +97,27 @@ func printTable(table *mib.Object) {
 	}
 	fmt.Printf("  INDEX %s\n", strings.Join(parts, ", "))
 
+	// Compile the linked entries into owned runtime metadata. Schema-level and
+	// component-level issues retain representable MIB concerns.
+	schema, err := row.CompileIndexSchema()
+	if err != nil {
+		fmt.Printf("  INDEX-SCHEMA unavailable: %v\n", err)
+	} else {
+		if maximum, known := schema.MaximumWidth(); known {
+			fmt.Printf("  INDEX-SCHEMA width=%d..%d\n", schema.MinimumWidth(), maximum)
+		} else {
+			fmt.Printf("  INDEX-SCHEMA width=%d..unbounded\n", schema.MinimumWidth())
+		}
+		for _, issue := range schema.Issues() {
+			fmt.Printf("    schema issue: %s\n", issue.Message)
+		}
+		for _, component := range schema.Components() {
+			for _, issue := range component.Issues() {
+				fmt.Printf("    component issue (%s): %s\n", component.Name(), issue.Message)
+			}
+		}
+	}
+
 	// AUGMENTS relationships.
 	if aug := row.Augments(); aug != nil {
 		fmt.Printf("  AUGMENTS %s\n", aug.Name())

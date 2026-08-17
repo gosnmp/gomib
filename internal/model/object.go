@@ -3,8 +3,9 @@ package model
 import "slices"
 
 // Object is an OBJECT-TYPE definition from an SMIv1 or SMIv2 module.
-// Each object is classified by its [Kind]: scalar, table, row, or column.
-// Objects are attached to the OID tree via their [Node].
+// Objects with a resolved numeric OID are attached to the OID tree and
+// classified by their [Kind]: scalar, table, row, or column. Definitions with
+// unresolved numeric OIDs remain available with a nil [Object.Node].
 type Object struct {
 	entity
 	typ          *Type

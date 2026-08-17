@@ -192,6 +192,7 @@ type (
 	EncodedIndex             = model.EncodedIndex
 )
 
+// MaxInstanceOIDArcs is the SMI limit for a complete instance identifier.
 const MaxInstanceOIDArcs = model.MaxInstanceOIDArcs
 
 const (
@@ -274,27 +275,52 @@ const (
 	IndexEncodeSuffixTooLong       = model.IndexEncodeSuffixTooLong
 )
 
+// CompileIndexSchema copies and normalizes a row or column's effective INDEX
+// metadata into an owned schema.
 func CompileIndexSchema(object *Object) (*IndexSchema, error) {
 	return model.CompileIndexSchema(object)
 }
 
+// NewBoundIndexCodec binds an owned schema to a destination OID and explicit
+// complete instance-OID limit.
 func NewBoundIndexCodec(schema *IndexSchema, objectOID OID, maxInstanceArcs int) (*BoundIndexCodec, error) {
 	return model.NewBoundIndexCodec(schema, objectOID, maxInstanceArcs)
 }
 
+// BindIndexSchema binds an owned schema to an object's OID using the SMI
+// 128-arc complete instance-identifier limit.
 func BindIndexSchema(schema *IndexSchema, object *Object) (*BoundIndexCodec, error) {
 	return model.BindIndexSchema(schema, object)
 }
 
-func NewInteger32IndexValue(value int32) IndexValue    { return model.NewInteger32IndexValue(value) }
-func NewUnsigned32IndexValue(value uint32) IndexValue  { return model.NewUnsigned32IndexValue(value) }
-func NewGauge32IndexValue(value uint32) IndexValue     { return model.NewGauge32IndexValue(value) }
-func NewTimeTicksIndexValue(value uint32) IndexValue   { return model.NewTimeTicksIndexValue(value) }
-func NewCounter32IndexValue(value uint32) IndexValue   { return model.NewCounter32IndexValue(value) }
-func NewIpAddressIndexValue(value [4]byte) IndexValue  { return model.NewIpAddressIndexValue(value) }
+// NewInteger32IndexValue returns a signed Integer32 index value.
+func NewInteger32IndexValue(value int32) IndexValue { return model.NewInteger32IndexValue(value) }
+
+// NewUnsigned32IndexValue returns an Unsigned32 index value.
+func NewUnsigned32IndexValue(value uint32) IndexValue { return model.NewUnsigned32IndexValue(value) }
+
+// NewGauge32IndexValue returns a Gauge32 index value.
+func NewGauge32IndexValue(value uint32) IndexValue { return model.NewGauge32IndexValue(value) }
+
+// NewTimeTicksIndexValue returns a TimeTicks index value.
+func NewTimeTicksIndexValue(value uint32) IndexValue { return model.NewTimeTicksIndexValue(value) }
+
+// NewCounter32IndexValue returns a mechanically representable Counter32 index value.
+func NewCounter32IndexValue(value uint32) IndexValue { return model.NewCounter32IndexValue(value) }
+
+// NewIpAddressIndexValue returns an IPv4 index value.
+func NewIpAddressIndexValue(value [4]byte) IndexValue { return model.NewIpAddressIndexValue(value) }
+
+// NewOctetStringIndexValue returns an owned OCTET STRING index value.
 func NewOctetStringIndexValue(value []byte) IndexValue { return model.NewOctetStringIndexValue(value) }
-func NewBitsIndexValue(value []byte) IndexValue        { return model.NewBitsIndexValue(value) }
-func NewOpaqueIndexValue(value []byte) IndexValue      { return model.NewOpaqueIndexValue(value) }
+
+// NewBitsIndexValue returns an owned BITS index value.
+func NewBitsIndexValue(value []byte) IndexValue { return model.NewBitsIndexValue(value) }
+
+// NewOpaqueIndexValue returns an owned Opaque index value.
+func NewOpaqueIndexValue(value []byte) IndexValue { return model.NewOpaqueIndexValue(value) }
+
+// NewObjectIdentifierIndexValue returns an owned OBJECT IDENTIFIER index value.
 func NewObjectIdentifierIndexValue(value OID) IndexValue {
 	return model.NewObjectIdentifierIndexValue(value)
 }

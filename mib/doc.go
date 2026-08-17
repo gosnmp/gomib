@@ -17,6 +17,8 @@
 //   - [Node] represents named OID tree nodes and supports tree navigation.
 //   - [Object] models OBJECT-TYPE definitions including table, row, column,
 //     index, and effective-constraint helpers.
+//   - [IndexSchema] and [BoundIndexCodec] provide owned, exact table-index
+//     decoding and canonical encoding for runtime plans.
 //   - [Type] models textual conventions and type chains.
 //   - [Notification], [Group], [Compliance], and [Capability] expose
 //     conformance and notification definitions.
@@ -27,6 +29,8 @@
 // structs such as [Range], [NamedValue], [Revision], [IndexEntry], and
 // [TrapInfo] expose fields directly. Slice-returning accessors return copies,
 // so callers may modify returned slices without affecting the model.
+// OBJECT-TYPE definitions remain queryable when their numeric OIDs cannot be
+// resolved; in that case [Object.Node] and [Object.OID] return nil.
 //
 // # Resolution
 //

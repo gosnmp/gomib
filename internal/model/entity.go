@@ -32,7 +32,8 @@ func (e *entity) Span() Span { return e.span }
 // Name returns the entity's descriptor name.
 func (e *entity) Name() string { return e.name }
 
-// Node returns the OID tree node this entity is attached to.
+// Node returns the OID tree node this entity is attached to, or nil when its
+// numeric OID could not be resolved.
 func (e *entity) Node() *Node { return e.node }
 
 // Module returns the module that defines this entity.
