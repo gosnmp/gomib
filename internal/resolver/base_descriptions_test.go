@@ -36,26 +36,37 @@ func TestBaseModuleTypeDescriptions(t *testing.T) {
 func TestBaseModuleNodeDescriptions(t *testing.T) {
 	m := resolveWithBase(nil, nil, nil)
 
-	// Nodes converted to OBJECT-IDENTITY should have descriptions.
-	nodesWithDescs := []string{
+	// RFC 2578 defines these registrations as plain OBJECT IDENTIFIER value
+	// assignments, which cannot carry DESCRIPTION clauses.
+	plainNodes := []string{
 		"internet", "enterprises", "mgmt", "mib-2",
 		"private", "experimental", "directory", "transmission",
 		"security", "snmpV2", "snmpDomains", "snmpModules",
-		"snmpProxys", "zeroDotZero",
+		"snmpProxys",
 	}
 
-	for _, name := range nodesWithDescs {
+	for _, name := range plainNodes {
 		node := m.Node(name)
 		if node == nil {
 			t.Errorf("node %q not found", name)
 			continue
 		}
-		if node.Description() == "" {
-			t.Errorf("node %q has empty description", name)
+		if node.Description() != "" {
+			t.Errorf("plain OID node %q has description %q", name, node.Description())
 		}
 	}
 
-	// ASN.1 structural arcs remain plain value assignments without descriptions.
+	// zeroDotZero is the OBJECT-IDENTITY defined by RFC 2578 and retains its
+	// source DESCRIPTION.
+	zeroDotZero := m.Node("zeroDotZero")
+	if zeroDotZero == nil {
+		t.Fatal("node \"zeroDotZero\" not found")
+	}
+	if zeroDotZero.Description() == "" {
+		t.Error("node \"zeroDotZero\" has empty description")
+	}
+
+	// ASN.1 structural arcs are also plain assignments without descriptions.
 	structuralArcs := []string{"iso", "org", "dod"}
 	for _, name := range structuralArcs {
 		node := m.Node(name)
@@ -68,23 +79,31 @@ func TestBaseModuleNodeDescriptions(t *testing.T) {
 func TestBaseModuleNodeObjectIdentity(t *testing.T) {
 	m := resolveWithBase(nil, nil, nil)
 
-	// Nodes defined via OBJECT-IDENTITY should report as such.
-	objIdentNodes := []string{
+	// RFC 2578 defines these registrations as plain OID assignments.
+	plainNodes := []string{
 		"internet", "enterprises", "mgmt", "mib-2",
 		"private", "experimental", "directory", "transmission",
 		"security", "snmpV2", "snmpDomains", "snmpModules",
-		"snmpProxys", "zeroDotZero",
+		"snmpProxys",
 	}
 
-	for _, name := range objIdentNodes {
+	for _, name := range plainNodes {
 		node := m.Node(name)
 		if node == nil {
 			t.Errorf("node %q not found", name)
 			continue
 		}
-		if !node.IsObjectIdentity() {
-			t.Errorf("node %q should be OBJECT-IDENTITY", name)
+		if node.IsObjectIdentity() {
+			t.Errorf("plain OID node %q reported as OBJECT-IDENTITY", name)
 		}
+	}
+
+	zeroDotZero := m.Node("zeroDotZero")
+	if zeroDotZero == nil {
+		t.Fatal("node \"zeroDotZero\" not found")
+	}
+	if !zeroDotZero.IsObjectIdentity() {
+		t.Error("node \"zeroDotZero\" should be OBJECT-IDENTITY")
 	}
 }
 

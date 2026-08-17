@@ -46,11 +46,11 @@ func (n *Node) Arc() uint32 { return n.arc }
 // Name returns the node's symbolic name, or "" if unnamed.
 func (n *Node) Name() string { return n.name }
 
-// Description returns the description of this node's OID assignment, or "".
-// Populated for base module OID assignments and OBJECT-IDENTITY definitions.
+// Description returns the description associated with this node's definition,
+// or "" when its definition cannot carry description text.
 func (n *Node) Description() string { return n.desc }
 
-// Reference returns the reference string of this node's OID assignment, or "".
+// Reference returns the reference associated with this node's definition, or "".
 func (n *Node) Reference() string { return n.ref }
 
 // Kind returns the structural classification of this node.

@@ -271,7 +271,7 @@ for child := range node.Subtree() {
     fmt.Println(child.Name())
 }
 
-// Node metadata (populated for base module OIDs and OBJECT-IDENTITY definitions)
+// Node metadata (populated when present on definitions such as OBJECT-IDENTITY)
 node.Description() // OID assignment description text
 node.Reference()   // reference string
 ```

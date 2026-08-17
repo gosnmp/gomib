@@ -591,6 +591,12 @@ func checkNodeImplicit(ctx *resolverContext) {
 		if len(node.Children()) == 0 {
 			continue
 		}
+		// ASN.1 defines root arcs 0, 1, and 2 intrinsically. They are not
+		// implicit registrations when an RFC module references them numerically.
+		oid := node.OID()
+		if len(oid) == 1 && oid[0] <= 2 {
+			continue
+		}
 		// Find the module of the first named child to attribute the diagnostic.
 		var mod *module.Module
 		for _, child := range node.Children() {
@@ -603,7 +609,7 @@ func checkNodeImplicit(ctx *resolverContext) {
 		}
 		ctx.EmitDiagnostic(types.DiagNodeImplicit,
 			mod, types.Span{},
-			fmt.Sprintf("implicit node at OID %s", node.OID()))
+			fmt.Sprintf("implicit node at OID %s", oid))
 	}
 }
 

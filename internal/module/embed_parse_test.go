@@ -68,9 +68,10 @@ func TestEmbeddedSNMPv2SMI_Content(t *testing.T) {
 		t.Error("SNMPv2-SMI should have value assignments")
 	}
 
-	// Should have OBJECT-IDENTITY definitions (internet, enterprises, etc.)
-	if len(target.ObjectIdentities) == 0 {
-		t.Error("SNMPv2-SMI should have OBJECT-IDENTITY definitions")
+	// RFC 2578 defines only zeroDotZero via OBJECT-IDENTITY; the administrative
+	// registrations above it are plain OBJECT IDENTIFIER assignments.
+	if len(target.ObjectIdentities) != 1 || target.ObjectIdentities[0].Name != "zeroDotZero" {
+		t.Errorf("SNMPv2-SMI OBJECT-IDENTITY definitions = %v, want zeroDotZero only", target.ObjectIdentities)
 	}
 }
 
