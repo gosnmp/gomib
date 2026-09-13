@@ -990,3 +990,22 @@ func TestCorpusRoundTrip(t *testing.T) {
 		})
 	}
 }
+
+func TestFailedTypeDefinitionRetainsConsumedPrefix(t *testing.T) {
+	source := "TEST-MIB DEFINITIONS ::= BEGIN\n-- before\nBroken ::= [0] -- tag\nSEQUENCE { field }\ngood OBJECT IDENTIFIER ::= { iso 99999 }\nEND\n"
+	p := New([]byte(source), nil, types.DefaultConfig())
+	file := p.ParseModule()
+	if string(cst.ReconstructText(file, []byte(source))) != source {
+		t.Fatal("failed definition lost consumed tokens or trivia")
+	}
+	if len(file.Modules) != 1 || len(file.Modules[0].Body) != 2 {
+		t.Fatalf("expected recovery node and subsequent definition: %#v", file.Modules)
+	}
+	recovered, ok := file.Modules[0].Body[0].(*cst.ErrorNode)
+	if !ok || int(recovered.Span.Start) != strings.Index(source, "Broken ::=") {
+		t.Fatalf("expected complete failed-definition recovery node, got %#v", file.Modules[0].Body[0])
+	}
+	if _, ok := file.Modules[0].Body[1].(*cst.ValueAssignmentNode); !ok {
+		t.Fatal("lost subsequent definition")
+	}
+}

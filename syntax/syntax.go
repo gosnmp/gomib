@@ -378,6 +378,9 @@ func Tokenize(source []byte) []Token {
 // Returns the CST root and any lexer/parser diagnostics as span-based
 // diagnostics (byte offsets). Use [LineTable.LineCol] to convert offsets
 // to line/column numbers.
+// Type expressions allow at most 64 nested parser levels, including the
+// innermost type. Excess nesting emits type-nesting-limit and retains the
+// failed definition as recovery tokens, preserving exact source bytes.
 func Parse(source []byte) (file *ModuleFile, diags []SpanDiagnostic) {
 	p := cstparser.New(source, nil, types.DiagnosticConfig{})
 	return p.ParseModule(), p.Diagnostics()

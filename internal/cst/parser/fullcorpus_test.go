@@ -34,6 +34,11 @@ func TestFullCorpusRoundTrip(t *testing.T) {
 				}
 				p := parser.New(source, nil, types.DefaultConfig())
 				file := p.ParseModule()
+				for _, diag := range p.Diagnostics() {
+					if diag.Code == types.DiagTypeNestingLimit {
+						t.Fatal("corpus exceeded type nesting limit")
+					}
+				}
 				got := cst.ReconstructText(file, source)
 				if string(got) != string(source) {
 					for i := 0; i < len(got) && i < len(source); i++ {

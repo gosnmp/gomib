@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Breaking Changes
 
+- Limit nested type expressions to 64 parser levels, including the innermost type; report `type-nesting-limit` and omit affected semantic definitions while retaining lossless CST recovery tokens
 - Retain unsuppressed diagnostics meeting `FailAt` regardless of reporting verbosity, so quiet and silent loads enforce the same configured threshold; effective fatal diagnostics remain unsuppressible
 - Replace partial `DecodeSuffix` and `OidLookup.DecodeIndexes` decoding with owned `IndexSchema` metadata, exact bounded decoding, and canonical encoding
 - Preserve precise integer and octet index value kinds instead of collapsing them into generic integer and octet-string variants

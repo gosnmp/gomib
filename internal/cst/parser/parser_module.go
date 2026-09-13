@@ -120,10 +120,19 @@ func (p *Parser) parseOneModule() (cst.ModuleNode, bool) {
 		}
 
 		posBefore := p.currentSpan().Start
+		tokenStart, triviaStart := p.pos, p.lastEnd
 		def, parseErr := p.parseDefinition()
 		if parseErr != nil {
 			p.recordParseError(*parseErr)
-			skipped := p.recoverToDefinition()
+			// A failed definition has no retained node. Recover its consumed
+			// prefix too, including trivia, so partial types remain lossless.
+			consumedEnd := p.pos
+			p.pos, p.lastEnd = tokenStart, triviaStart
+			var skipped []cst.SyntaxToken
+			for p.pos < consumedEnd {
+				skipped = append(skipped, p.advance())
+			}
+			skipped = append(skipped, p.recoverToDefinition()...)
 			if len(skipped) > 0 {
 				errNode := &cst.ErrorNode{
 					Tokens: skipped,

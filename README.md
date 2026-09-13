@@ -48,6 +48,13 @@ func main() {
 
 ## Loading MIBs
 
+Type expressions are limited to 64 nested parser levels, including the
+innermost type. Excess nesting produces the Error diagnostic
+`type-nesting-limit`; affected definitions are omitted from semantic results,
+and later definitions can still resolve. CST parsing retains the source bytes
+as recovery tokens. Diagnostic configuration controls load acceptance and
+reporting; suppressing this diagnostic does not disable the nesting limit.
+
 ```go
 // Load everything from a source (parses all files)
 m, err := gomib.Load(ctx, gomib.WithSource(src))

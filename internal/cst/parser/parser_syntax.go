@@ -1,14 +1,31 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/golangsnmp/gomib/internal/cst"
 	"github.com/golangsnmp/gomib/internal/lexer"
 	"github.com/golangsnmp/gomib/internal/types"
 )
 
+// Keep parser-produced types bounded through lowering and traversal. This
+// matches mib-rs so both compilers recover at the same nesting boundary.
+const maxTypeSyntaxDepth = 64
+
 // parseTypeSyntax parses a type expression: builtin types, type references,
 // constrained types, SEQUENCE, CHOICE, tagged types, etc.
 func (p *Parser) parseTypeSyntax() (cst.TypeSyntaxNode, *types.SpanDiagnostic) {
+	if p.typeDepth == maxTypeSyntaxDepth {
+		return nil, &types.SpanDiagnostic{
+			Code:     types.DiagTypeNestingLimit,
+			Severity: p.DiagConfig.EffectiveSeverity(types.DiagTypeNestingLimit),
+			Message:  fmt.Sprintf("type syntax nesting exceeds limit of %d", maxTypeSyntaxDepth),
+			Span:     p.currentSpan(),
+		}
+	}
+	p.typeDepth++
+	defer func() { p.typeDepth-- }()
+
 	start := p.currentSpan().Start
 	var baseSyntax cst.TypeSyntaxNode
 

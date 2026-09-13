@@ -24,6 +24,7 @@ const (
 	DiagIdentifierLength32   = "identifier-length-32"
 	DiagBadIdentifierCase    = "bad-identifier-case"
 	DiagParseError           = "parse-error"
+	DiagTypeNestingLimit     = "type-nesting-limit"
 	DiagInvalidU32           = "invalid-u32"
 	DiagInvalidI64           = "invalid-i64"
 	DiagKeywordReserved      = "keyword-reserved"
@@ -237,6 +238,7 @@ var parserDiagCodes = []codeEntry{
 	{DiagIdentifierLength32, SeverityWarning},
 	{DiagBadIdentifierCase, SeverityError},
 	{DiagParseError, SeverityError},
+	{DiagTypeNestingLimit, SeverityError},
 	{DiagInvalidU32, SeverityError},
 	{DiagInvalidI64, SeverityError},
 	{DiagKeywordReserved, SeveritySevere},

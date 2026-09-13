@@ -22,10 +22,11 @@ import (
 
 // Parser converts a token stream into a lossless concrete syntax tree.
 type Parser struct {
-	source  []byte
-	tokens  []lexer.Token // full stream including comments and EOF
-	pos     int           // current position in tokens
-	lastEnd types.ByteOffset
+	source    []byte
+	tokens    []lexer.Token // full stream including comments and EOF
+	pos       int           // current position in tokens
+	lastEnd   types.ByteOffset
+	typeDepth int
 	types.SpanDiagnosticCollector
 	types.Logger
 }
@@ -292,7 +293,7 @@ func (p *Parser) recoverToDefinition() []cst.SyntaxToken {
 		next := p.peekNth(1).Kind
 
 		if (current.IsIdentifier() && next.IsMacroKeyword()) ||
-			(current.IsIdentifier() && next == lexer.TokColonColonEqual) ||
+			((current.IsIdentifier() || current.IsTypeKeyword()) && next == lexer.TokColonColonEqual) ||
 			(current == lexer.TokUppercaseIdent && next == lexer.TokKwTextualConvention) ||
 			(current == lexer.TokUppercaseIdent && next == lexer.TokKwMacro) ||
 			(current.IsIdentifier() && next == lexer.TokKwObject &&
