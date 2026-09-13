@@ -1,7 +1,7 @@
 // Package lower transforms CST nodes into module IR types.
 //
 // The lowered output matches the existing parser's output field by field.
-// Diagnostics are passed through from the CST parser, not regenerated.
+// Parser diagnostics are retained alongside diagnostics for lowered values.
 package lower
 
 import (
@@ -63,6 +63,8 @@ func (l *lowerer) convertU32(tok cst.SyntaxToken) uint32 {
 	text := l.text(tok)
 	v, err := strconv.ParseUint(text, 10, 32)
 	if err != nil {
+		l.EmitDiagnostic(types.DiagInvalidU32, tok.Span,
+			fmt.Sprintf("invalid number %q (not a valid u32)", text))
 		return 0
 	}
 	return uint32(v)
@@ -73,6 +75,8 @@ func (l *lowerer) convertI64(tok cst.SyntaxToken) int64 {
 	text := l.text(tok)
 	v, err := strconv.ParseInt(text, 10, 64)
 	if err != nil {
+		l.EmitDiagnostic(types.DiagInvalidI64, tok.Span,
+			fmt.Sprintf("invalid number %q (not a valid i64)", text))
 		return 0
 	}
 	return v

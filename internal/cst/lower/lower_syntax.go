@@ -88,8 +88,8 @@ func (l *lowerer) lowerIntegerEnum(n *cst.IntegerEnumSyntaxNode) module.TypeSynt
 	seenValues := make(map[int64]bool)
 	for i := range n.Values {
 		v := &n.Values[i]
-		name := l.text(v.Label)
-		value := l.convertI64(v.Value)
+		name := namedNumbers[i].Name
+		value := namedNumbers[i].Value
 		if seenNames[name] {
 			l.EmitDiagnostic(types.DiagEnumNameRedefinition, v.Span,
 				fmt.Sprintf("duplicate enum name %q", name))
@@ -146,9 +146,16 @@ func (l *lowerer) lowerBits(n *cst.BitsSyntaxNode) module.TypeSyntax {
 
 		switch {
 		case pos < 0:
+			l.EmitDiagnostic(types.DiagBitsNumberNegative, v.Span,
+				fmt.Sprintf("negative BITS position %d for %q", pos, name))
 			pos = 0
 		case pos >= 65535*8:
+			l.EmitDiagnostic(types.DiagBitsNumberTooLarge, v.Span,
+				fmt.Sprintf("BITS position %d for %q exceeds maximum (%d)", pos, name, 65535*8-1))
 			pos = 0
+		case pos >= 128:
+			l.EmitDiagnostic(types.DiagBitsNumberLarge, v.Span,
+				fmt.Sprintf("BITS position %d for %q may cause interoperability problems", pos, name))
 		}
 		namedBits = append(namedBits, module.NewNamedBit(name, uint32(pos), v.Span))
 	}

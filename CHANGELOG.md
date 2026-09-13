@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add reusable object-bound index codecs, normalized effective constraints, component raw arcs, and typed codec failures
 - Retain representable component and whole-schema concerns, including unresolved object identities and zero-width indexes
 
+### Fixed
+
+- Restore numeric conversion and BITS position diagnostics during CST lowering, including numeric-first OID defaults, with shared severity and suppression policy
+
 ## [0.13.2] - 2026-08-13
 
 ### Changed

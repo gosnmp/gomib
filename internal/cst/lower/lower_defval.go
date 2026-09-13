@@ -126,7 +126,7 @@ func (l *lowerer) lowerDefValBracedIdent(content []cst.SyntaxToken) module.DefVa
 	}
 
 	// This is OID: { sysName 0 } or { iso 3 6 1 }
-	return l.lowerDefValOidWithFirstIdent(content)
+	return l.lowerDefValOidFromTokens(content)
 }
 
 func (l *lowerer) lowerDefValBitsLabels(content []cst.SyntaxToken) module.DefVal {
@@ -142,7 +142,7 @@ func (l *lowerer) lowerDefValBitsLabels(content []cst.SyntaxToken) module.DefVal
 	return &module.DefValBits{Labels: labels}
 }
 
-func (l *lowerer) lowerDefValOidWithFirstIdent(content []cst.SyntaxToken) module.DefVal {
+func (l *lowerer) lowerDefValOidFromTokens(content []cst.SyntaxToken) module.DefVal {
 	if len(content) == 0 {
 		return &module.DefValOidValue{Components: nil}
 	}
@@ -150,49 +150,16 @@ func (l *lowerer) lowerDefValOidWithFirstIdent(content []cst.SyntaxToken) module
 	var components []module.OidComponent
 	i := 0
 
-	// First token is the identifier we already know about.
-	firstTok := content[i]
-	identName := l.text(firstTok)
-	i++
-
-	// Check if followed by ( for named number.
-	if i < len(content) && content[i].Kind == lexer.TokLParen {
-		i++ // skip (
-		if i < len(content) && content[i].Kind == lexer.TokNumber {
-			numTok := content[i]
-			number := l.convertU32(numTok)
-			i++
-			var endOffset types.ByteOffset
-			if i < len(content) && content[i].Kind == lexer.TokRParen {
-				endOffset = content[i].Span.End
-				i++
-			} else {
-				endOffset = numTok.Span.End
-			}
-			components = append(components, module.OidComponent{
-				Name:      identName,
-				Number:    number,
-				HasNumber: true,
-				Span:      types.NewSpan(firstTok.Span.Start, endOffset),
-			})
-		} else {
-			// Malformed, just add as name
-			components = append(components, module.OidComponent{Name: identName, Span: firstTok.Span})
-		}
-	} else {
-		components = append(components, module.OidComponent{Name: identName, Span: firstTok.Span})
-	}
-
-	// Parse remaining OID components.
+	// Parse every OID component, including a numeric first arc.
 	for i < len(content) {
 		tok := content[i]
-		switch tok.Kind {
-		case lexer.TokNumber:
+		switch {
+		case tok.Kind == lexer.TokNumber:
 			number := l.convertU32(tok)
 			components = append(components, module.OidComponent{Number: number, HasNumber: true, Span: tok.Span})
 			i++
 
-		case lexer.TokLowercaseIdent, lexer.TokUppercaseIdent:
+		case tok.Kind.IsIdentifier() || (i == 0 && tok.Kind.IsKeyword()):
 			name := l.text(tok)
 			compStart := tok.Span.Start
 			i++
@@ -209,10 +176,6 @@ func (l *lowerer) lowerDefValOidWithFirstIdent(content []cst.SyntaxToken) module
 	return &module.DefValOidValue{Components: components}
 }
 
-func (l *lowerer) lowerDefValOidFromTokens(content []cst.SyntaxToken) module.DefVal {
-	return l.lowerDefValOidWithFirstIdent(content)
-}
-
 // parseDefValOidIdentComponent parses a single OID component starting with an
 // identifier from DEFVAL content tokens. Updates *idx to reflect consumed tokens.
 func (l *lowerer) parseDefValOidIdentComponent(content []cst.SyntaxToken, idx *int, name string, compStart types.ByteOffset, nameSpan types.Span) module.OidComponent {
@@ -225,6 +188,11 @@ func (l *lowerer) parseDefValOidIdentComponent(content []cst.SyntaxToken, idx *i
 
 	switch content[i].Kind {
 	case lexer.TokDot:
+		// Qualification is supported only after the root component. Preserve
+		// the first token as a name when recovering a qualified root.
+		if i == 1 {
+			return module.OidComponent{Name: name, Span: nameSpan}
+		}
 		i++ // skip dot
 		if i < len(content) && content[i].Kind == lexer.TokLowercaseIdent {
 			qname := l.text(content[i])
