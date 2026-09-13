@@ -367,7 +367,7 @@ func checkRowStatusDefaults(ctx *resolverContext, objRefs []objectTypeRef) {
 					ref.mod, ref.obj.Spans.Access,
 					fmt.Sprintf("%q: RowStatus should have MAX-ACCESS read-create, has %s", ref.obj.Name, access))
 			}
-		} else if access != types.AccessReadWrite {
+		} else if ref.mod.Language == types.LanguageSMIv1 && access != types.AccessReadWrite {
 			ctx.EmitDiagnostic(types.DiagRowStatusAccess,
 				ref.mod, ref.obj.Spans.Access,
 				fmt.Sprintf("%q: RowStatus should have ACCESS read-write, has %s", ref.obj.Name, access))
