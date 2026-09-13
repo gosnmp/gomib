@@ -3,6 +3,7 @@ package gomib_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -924,4 +925,93 @@ func TestMultiModuleFileLoadBaseByName(t *testing.T) {
 
 	testutil.NotNil(t, m.Module("PROBLEM-MULTIMOD-BASE-MIB"),
 		"base module should be found by content-derived name")
+}
+
+func TestLoadAcceptanceIndependentOfReporting(t *testing.T) {
+	const input = "THRESHOLD-MIB { 01 } DEFINITIONS ::= BEGIN\ngood OBJECT IDENTIFIER ::= { iso 99999 }\nEND\n"
+	for _, reporting := range []mib.ReportingLevel{mib.ReportingSilent, mib.ReportingQuiet, mib.ReportingDefault, mib.ReportingVerbose} {
+		for _, failAt := range []mib.Severity{mib.SeverityFatal, mib.SeveritySevere, mib.SeverityError, mib.SeverityMinor, mib.SeverityStyle, mib.SeverityWarning, mib.SeverityInfo} {
+			for _, effective := range []mib.Severity{mib.SeverityFatal, mib.SeveritySevere, mib.SeverityMinor, mib.SeverityInfo} {
+				for _, ignored := range []bool{false, true} {
+					t.Run(fmt.Sprintf("%v/%v/%v/ignored=%v", reporting, failAt, effective, ignored), func(t *testing.T) {
+						cfg := mib.DiagnosticConfig{
+							Reporting: reporting,
+							FailAt:    failAt,
+							Overrides: map[string]mib.Severity{types.DiagNumberLeadingZero: effective},
+							// The header's range warning is independent of its leading-zero diagnostic.
+							Ignore: []string{types.DiagMinMaxRange},
+						}
+						if ignored {
+							cfg.Ignore = append(cfg.Ignore, "number-leading-*")
+						}
+						src := &fakeSource{modules: map[string]fakeModule{
+							"THRESHOLD-MIB": {content: []byte(input)},
+						}}
+						m, err := gomib.Load(context.Background(), gomib.WithSource(src), gomib.WithModules("THRESHOLD-MIB"), gomib.WithDiagnosticConfig(cfg))
+						shouldFail := effective == mib.SeverityFatal || (!ignored && effective <= failAt)
+						if shouldFail {
+							if !errors.Is(err, gomib.ErrDiagnosticThreshold) {
+								t.Fatalf("expected threshold rejection, got %v", err)
+							}
+						} else if err != nil {
+							t.Fatalf("expected accepted load, got %v", err)
+						}
+						if m == nil {
+							t.Fatal("load must retain the model")
+						}
+						if node := m.Node("good"); node == nil || node.OID().String() != "1.99999" {
+							t.Fatal("expected resolved good definition")
+						}
+						found := false
+						for _, d := range m.Diagnostics() {
+							if d.Code != types.DiagNumberLeadingZero {
+								continue
+							}
+							found = true
+							if d.Severity != effective || d.Line != 1 || d.Column != 17 || d.EndLine != 1 || d.EndColumn != 19 {
+								t.Fatalf("unexpected explanation: %+v", d)
+							}
+						}
+						if shouldFail && !found {
+							t.Fatal("rejection must retain its explanation")
+						}
+						if !shouldFail && (ignored || reporting == mib.ReportingSilent) && found {
+							t.Fatal("unexpected suppressed diagnostic")
+						}
+					})
+				}
+			}
+		}
+	}
+}
+
+func TestSilentThresholdRetainsEveryPhase(t *testing.T) {
+	const input = `DIAGNOSTIC-POLICY-MIB { 01 } DEFINITIONS ::= BEGIN
+IMPORTS Integer32 FROM SNMPv2-SMI;
+bad_name OBJECT IDENTIFIER ::= { iso 99999 }
+END
+`
+	for _, tc := range []struct {
+		name, input, code string
+	}{
+		{"LEXER-MIB", "LEXER-MIB DEFINITIONS ::= BEGIN\n@\nEND\n", types.DiagUnexpectedCharacter},
+		{"DIAGNOSTIC-POLICY-MIB", input, types.DiagNumberLeadingZero},
+		{"DIAGNOSTIC-POLICY-MIB", input, types.DiagMissingModuleIdentity},
+		{"DIAGNOSTIC-POLICY-MIB", input, types.DiagImportUnused},
+	} {
+		t.Run(tc.code, func(t *testing.T) {
+			cfg := mib.SilentConfig()
+			cfg.FailAt = mib.SeveritySevere
+			cfg.Overrides = map[string]mib.Severity{tc.code: mib.SeveritySevere}
+			src := &fakeSource{modules: map[string]fakeModule{tc.name: {content: []byte(tc.input)}}}
+			m, err := gomib.Load(context.Background(), gomib.WithSource(src), gomib.WithModules(tc.name), gomib.WithDiagnosticConfig(cfg))
+			if !errors.Is(err, gomib.ErrDiagnosticThreshold) || m == nil {
+				t.Fatalf("expected threshold rejection with model, got %v", err)
+			}
+			diags := m.Diagnostics()
+			if len(diags) != 1 || diags[0].Code != tc.code || diags[0].Severity != mib.SeveritySevere {
+				t.Fatalf("expected one explanation for %s, got %+v", tc.code, diags)
+			}
+		})
+	}
 }

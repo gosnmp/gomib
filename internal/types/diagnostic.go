@@ -56,13 +56,15 @@ func (d Diagnostic) String() string {
 // of vendor MIB sets, configure both permissive resolution and
 // FailAt = SeverityFatal.
 type DiagnosticConfig struct {
-	// Reporting controls baseline diagnostic output verbosity.
+	// Reporting controls baseline diagnostic output verbosity. Diagnostics
+	// meeting FailAt are also retained, even outside this reporting level.
 	Reporting ReportingLevel
 
 	// FailAt sets the severity threshold for failure.
-	// If any diagnostic has severity <= FailAt, loading returns
+	// If any unsuppressed diagnostic has effective severity <= FailAt, loading returns
 	// ErrDiagnosticThreshold (the Mib is still returned with all
-	// resolved data). Lower severity numbers are more severe.
+	// resolved data). This is independent of Reporting; diagnostics meeting the
+	// threshold are retained to explain rejection. Lower numbers are more severe.
 	// Default is SeveritySevere. Set to SeverityFatal for best-effort
 	// loading that only fails on unrecoverable parse errors.
 	FailAt Severity
@@ -72,8 +74,9 @@ type DiagnosticConfig struct {
 	// Demoting a diagnostic does not suppress it; use Ignore for suppression.
 	Overrides map[string]Severity
 
-	// Ignore lists diagnostic codes to suppress entirely.
-	// Supports glob patterns (e.g., "identifier-*").
+	// Ignore lists diagnostic codes to suppress from collection and failure
+	// checks. Supports glob patterns (e.g., "identifier-*"). Effective fatal
+	// diagnostics cannot be suppressed.
 	Ignore []string
 }
 
@@ -118,8 +121,8 @@ func QuietConfig() DiagnosticConfig {
 	}
 }
 
-// SilentConfig returns a silent configuration that suppresses all diagnostics.
-// Only fatal errors that prevent parsing are reported.
+// SilentConfig retains only effective fatal diagnostics and fails on them.
+// Raising FailAt also retains diagnostics meeting that threshold.
 func SilentConfig() DiagnosticConfig {
 	return DiagnosticConfig{
 		Reporting: ReportingSilent,
@@ -155,8 +158,9 @@ func (c DiagnosticConfig) ReportsSeverity(sev Severity) bool {
 
 // ShouldRetain reports whether a diagnostic should be stored. Promotions can
 // bring diagnostics into the reporting level, while demotions do not discard
-// diagnostics included by their registered severity. Effective fatal
-// diagnostics are retained even when ignored or reporting is silent.
+// diagnostics included by their registered severity. Unsuppressed diagnostics
+// meeting the effective failure threshold are also retained regardless of
+// reporting level. Effective fatal diagnostics are retained even when ignored.
 func (c DiagnosticConfig) ShouldRetain(code string) bool {
 	registered := SeverityForCode(code)
 	effective := c.effectiveSeverity(code, registered)
@@ -166,7 +170,7 @@ func (c DiagnosticConfig) ShouldRetain(code string) bool {
 	if c.IsIgnored(code) {
 		return false
 	}
-	return c.ReportsSeverity(registered) || c.ReportsSeverity(effective)
+	return c.ShouldFail(effective) || c.ReportsSeverity(registered) || c.ReportsSeverity(effective)
 }
 
 // ShouldReport reports whether the configured reporting and ignore policies

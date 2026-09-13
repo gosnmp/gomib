@@ -664,8 +664,8 @@ Parser -> SpanDiagnostic (byte offsets)
   [lowering converts spans to line/column ranges via LineTable]
 Validator -> Diagnostic (line/column range)
 Resolver -> Diagnostic (line/column range)
+  [DiagnosticConfig controls retention at each stage]
   -> Mib.Diagnostics() (aggregated)
-  -> filtered by DiagnosticConfig
   -> checked against FailAt threshold
 ```
 
@@ -696,6 +696,12 @@ DiagnosticConfig {
 
 Presets: `DefaultConfig()` (report Minor+, fail on Severe),
 `VerboseConfig()`, `QuietConfig()`, `SilentConfig()`.
+
+Retention includes unsuppressed diagnostics whose effective severity meets
+`FailAt`, regardless of `Reporting`. Rejected loads retain their explanations.
+`Ignore` suppresses nonfatal diagnostics from collection and failure checks;
+effective fatal diagnostics bypass suppression. Overrides affect stored severity
+and acceptance; demotions retain diagnostics selected by their registered severity.
 
 Diagnostic positions are 1-based. `Line` and `Column` identify the inclusive
 start of the offending source region; `EndLine` and `EndColumn` identify its

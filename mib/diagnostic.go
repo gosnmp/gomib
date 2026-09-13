@@ -25,5 +25,6 @@ func VerboseConfig() DiagnosticConfig { return types.VerboseConfig() }
 // QuietConfig returns a low-noise reporting profile.
 func QuietConfig() DiagnosticConfig { return types.QuietConfig() }
 
-// SilentConfig returns a silent configuration that suppresses all diagnostics.
+// SilentConfig retains only effective fatal diagnostics and fails on them.
+// Raising FailAt also retains diagnostics meeting that threshold.
 func SilentConfig() DiagnosticConfig { return types.SilentConfig() }

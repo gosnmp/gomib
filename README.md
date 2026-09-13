@@ -523,6 +523,12 @@ gomib.WithDiagnosticConfig(mib.DiagnosticConfig{
 })
 ```
 
+Diagnostics meeting `FailAt` are retained even outside `Reporting` verbosity,
+so changing only `Reporting` does not change load acceptance. `Ignore` suppresses
+nonfatal diagnostics from both collection and failure checks; effective fatal
+diagnostics cannot be suppressed. `SilentConfig()` retains only effective fatal
+diagnostics unless its `FailAt` threshold is raised.
+
 CLI equivalents follow the same split:
 
 - `gomib load --strict` and `gomib load --permissive` change resolver behavior.
