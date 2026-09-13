@@ -38,6 +38,8 @@ type lowerer struct {
 	moduleName  string
 	parserDiags []types.SpanDiagnostic
 	diagConfig  types.DiagnosticConfig
+	// Zero enum checks wait for the module's retained language evidence.
+	zeroEnums []module.NamedNumber
 	types.SpanDiagnosticCollector
 }
 
@@ -134,6 +136,7 @@ func (l *lowerer) lowerModule(mod *cst.ModuleNode) *module.Module {
 
 	// Reset collector for this module so diagnostics don't leak between modules.
 	l.SpanDiagnosticCollector = types.NewSpanDiagnosticCollector(l.diagConfig)
+	l.zeroEnums = nil
 
 	// Record parser diagnostics that fall within this module's span.
 	for _, d := range l.parserDiags {
@@ -154,6 +157,12 @@ func (l *lowerer) lowerModule(mod *cst.ModuleNode) *module.Module {
 		l.lowerDefinition(def, m)
 	}
 	m.Language = detectLanguage(m)
+	if m.Language == types.LanguageSMIv1 {
+		for _, enum := range l.zeroEnums {
+			l.EmitDiagnostic(types.DiagEnumZero, enum.Span,
+				fmt.Sprintf("enumeration contains zero value %q(0) in SMIv1 module", enum.Name))
+		}
+	}
 
 	// Build line table.
 	lineTable := types.BuildLineTable(l.source)

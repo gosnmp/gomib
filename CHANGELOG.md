@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Restore `enum-zero` diagnostics for INTEGER enumerations in explicit SMIv1 modules, including shared severity and suppression policy
 - Restore numeric conversion and BITS position diagnostics during CST lowering, including numeric-first OID defaults, with shared severity and suppression policy
 - Apply RowStatus access diagnostics only to explicit SMIv1 or SMIv2 modules; unknown and mixed-language modules retain language-independent default checks
 

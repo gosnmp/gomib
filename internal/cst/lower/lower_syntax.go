@@ -100,6 +100,9 @@ func (l *lowerer) lowerIntegerEnum(n *cst.IntegerEnumSyntaxNode) module.TypeSynt
 				fmt.Sprintf("duplicate enum value %d", value))
 		}
 		seenValues[value] = true
+		if value == 0 {
+			l.zeroEnums = append(l.zeroEnums, namedNumbers[i])
+		}
 	}
 
 	return &module.TypeSyntaxIntegerEnum{
