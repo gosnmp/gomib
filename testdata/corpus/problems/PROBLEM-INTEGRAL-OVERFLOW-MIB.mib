@@ -1,7 +1,7 @@
 -- Synthetic integral conversion overflow recovery cases.
--- Covers named numbers, OID arcs, defaults and trap numbers.
--- Invalid integral values currently recover to zero with diagnostics.
--- Useful definitions following malformed values remain available.
+-- Invalid numeric values remain unresolved without operational placeholders.
+-- Original tokens and useful neighboring definitions remain available.
+-- Numeric-first OID defaults retain invalid components for inspection.
 
 PROBLEM-INTEGRAL-OVERFLOW-MIB DEFINITIONS ::= BEGIN
 

@@ -211,8 +211,10 @@ func (l *lowerer) lowerVariation(n *cst.CapabilityVariationNode) module.Variatio
 	}
 
 	var defval module.DefVal
+	var defvalSpan types.Span
 	if n.DefVal != nil {
 		defval = l.lowerDefVal(n.DefVal.Content)
+		defvalSpan = n.DefVal.Span
 	}
 
 	description := ""
@@ -231,6 +233,7 @@ func (l *lowerer) lowerVariation(n *cst.CapabilityVariationNode) module.Variatio
 		Access:           access,
 		CreationRequires: creationRequires,
 		DefVal:           defval,
+		DefValSpan:       defvalSpan,
 		Description:      description,
 		Span:             types.NewSpan(n.Span.Start, end),
 	}

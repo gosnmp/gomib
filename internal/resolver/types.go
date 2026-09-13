@@ -15,6 +15,88 @@ func resolveTypes(ctx *resolverContext) {
 	seedPrimitiveTypes(ctx)
 	createUserTypes(ctx)
 	resolveTypeBases(ctx)
+	invalidateNumericTypes(ctx)
+}
+
+// Invalid numeric syntax taints its dependent types regardless of inferred
+// primitive names. Process the existing parent graph once, including cycles.
+func invalidateNumericTypes(ctx *resolverContext) {
+	children := make(map[*model.Type][]*model.Type)
+	for _, typ := range ctx.mib.Types() {
+		if parent := typ.Parent(); parent != nil {
+			children[parent] = append(children[parent], typ)
+		}
+	}
+	var pending []*model.Type
+	for _, mod := range ctx.modules {
+		for _, definition := range mod.TypeDefs {
+			typ, ok := ctx.typeSymbols.get(mod, definition.Name)
+			if !ok {
+				continue
+			}
+			_, invalid := definition.Syntax.(*module.TypeSyntaxInvalid)
+			if typ.EffectiveBase() == model.BaseBits {
+				invalid = !checkBitsRefinement(ctx, definition.Syntax, mod)
+				if refinement := namedEnumSyntax(definition.Syntax); refinement != nil {
+					model.SetTypeBits(typ, extractNamedValues(refinement))
+					model.SetTypeEnums(typ, nil)
+				}
+			}
+			if invalid {
+				pending = append(pending, typ)
+			}
+		}
+	}
+	seen := make(map[*model.Type]bool)
+	for len(pending) > 0 {
+		typ := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+		if seen[typ] {
+			continue
+		}
+		seen[typ] = true
+		model.SetTypeBase(typ, model.BaseUnknown)
+		model.SetTypeEnums(typ, nil)
+		model.SetTypeBits(typ, nil)
+		model.SetTypeSizes(typ, nil)
+		model.SetTypeRanges(typ, nil)
+		model.SetTypeParent(typ, nil)
+		pending = append(pending, children[typ]...)
+	}
+}
+
+func namedEnumSyntax(syntax module.TypeSyntax) *module.TypeSyntaxIntegerEnum {
+	for {
+		switch value := syntax.(type) {
+		case *module.TypeSyntaxConstrained:
+			syntax = value.Base
+		case *module.TypeSyntaxIntegerEnum:
+			if value.Base != "" {
+				return value
+			}
+			return nil
+		default:
+			return nil
+		}
+	}
+}
+
+// Named refinements acquire their BITS interpretation only after parent
+// resolution. Direct BITS syntax is validated by the same rule during lowering.
+func checkBitsRefinement(ctx *resolverContext, syntax module.TypeSyntax, mod *module.Module) bool {
+	refinement := namedEnumSyntax(syntax)
+	if refinement == nil {
+		return true
+	}
+	valid := true
+	for _, number := range refinement.NamedNumbers {
+		code, message, representable := types.BitsPositionDiagnostic(number.Name, number.Value)
+		if code != "" {
+			ctx.EmitDiagnostic(code, mod, number.Span, message)
+		}
+		valid = valid && representable
+	}
+	return valid
 }
 
 // applicationBaseTypes maps well-known SMI base type names to their model.BaseType.
@@ -109,7 +191,8 @@ func createUserTypes(ctx *resolverContext) {
 			base, hasBase := syntaxToBaseType(td.Syntax)
 			// For base modules parsed from source, APPLICATION tag information is
 			// lost during lowering. Recover the correct base type by name.
-			if module.IsBaseModule(mod.Name) {
+			_, invalidSyntax := td.Syntax.(*module.TypeSyntaxInvalid)
+			if module.IsBaseModule(mod.Name) && !invalidSyntax {
 				if b, ok := applicationBaseTypes[td.Name]; ok {
 					base = b
 					hasBase = true
@@ -302,9 +385,9 @@ func getTypeRefBaseName(syntax module.TypeSyntax) string {
 	case *module.TypeSyntaxTypeRef:
 		return s.Name
 	case *module.TypeSyntaxConstrained:
-		if base, ok := s.Base.(*module.TypeSyntaxTypeRef); ok {
-			return base.Name
-		}
+		return getTypeRefBaseName(s.Base)
+	case *module.TypeSyntaxIntegerEnum:
+		return s.Base
 	}
 	return ""
 }
@@ -316,7 +399,9 @@ func getPrimitiveParentName(syntax module.TypeSyntax) string {
 	case *module.TypeSyntaxObjectIdentifier:
 		return "OBJECT IDENTIFIER"
 	case *module.TypeSyntaxIntegerEnum:
-		return "INTEGER"
+		if s.Base == "" {
+			return "INTEGER"
+		}
 	case *module.TypeSyntaxBits:
 		return "BITS"
 	case *module.TypeSyntaxConstrained:
@@ -362,6 +447,16 @@ func linkRFC1213TypesToTCs(ctx *resolverContext) {
 		sourceMods := ctx.moduleIndex[pair.sourceModule]
 		targetMods := ctx.moduleIndex[pair.targetModule]
 		if len(sourceMods) == 0 || len(targetMods) == 0 {
+			continue
+		}
+		invalidSyntax := false
+		for _, definition := range sourceMods[0].TypeDefs {
+			if definition.Name == pair.typeName {
+				_, invalidSyntax = definition.Syntax.(*module.TypeSyntaxInvalid)
+				break
+			}
+		}
+		if invalidSyntax {
 			continue
 		}
 

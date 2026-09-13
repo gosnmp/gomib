@@ -936,6 +936,7 @@ func TestCheckIndexAccessAndDefval(t *testing.T) {
 			if tt.defval {
 				dv := model.NewDefValInt(1, "1")
 				model.SetObjectDefaultValue(idxObj, &dv)
+				model.SetObjectDefaultValueSpan(idxObj, types.NewSpan(1, 2))
 			}
 			model.AddModuleObject(resolvedMod, idxObj)
 

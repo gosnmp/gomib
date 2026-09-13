@@ -1,0 +1,140 @@
+INVALID-NUMERIC-MIB DEFINITIONS ::= BEGIN
+IMPORTS OBJECT-TYPE, enterprises, Counter64 FROM SNMPv2-SMI;
+
+root OBJECT IDENTIFIER ::= { enterprises 99997 }
+badPlain OBJECT IDENTIFIER ::= { root 4294967296 }
+badNamed OBJECT IDENTIFIER ::= { root phantom(4) invalid(4294967296) }
+badKnown OBJECT IDENTIFIER ::= { root(4294967296) 9 }
+badQualified OBJECT IDENTIFIER ::= { INVALID-NUMERIC-MIB.root(4294967296) 10 }
+dependent OBJECT IDENTIFIER ::= { badPlain 1 }
+negativePlain OBJECT IDENTIFIER ::= { root -1 }
+negativeNamed OBJECT IDENTIFIER ::= { root negative(-4294967296) 2 }
+negativeQualified OBJECT IDENTIFIER ::= { root INVALID-NUMERIC-MIB.negative(-1) 2 }
+negativeFirst OBJECT IDENTIFIER ::= { -4294967296 2 }
+validZero OBJECT IDENTIFIER ::= { root 0 }
+validMaximum OBJECT IDENTIFIER ::= { root 4294967295 }
+
+BadEnum ::= INTEGER { invalid(9223372036854775808), zero(0), good(1) }
+BadBits ::= BITS { invalid(-1), zero(0), good(2) }
+BadLargeBits ::= BITS { invalid(524280), good(2) }
+BadEnumAlias ::= BadEnum
+BadBitsAlias ::= BadBits
+BadEnumRestricted ::= BadEnum { child(1) }
+BadBitsRefinement ::= ValidBits { negative(-1), good(2) }
+BadBitsRefinementAlias ::= BadBitsRefinement
+ValidEnum ::= INTEGER { zero(0), maximum(2147483647) }
+VendorEnum ::= INTEGER { minimum(-9223372036854775808), maximum(9223372036854775807) }
+ValidBits ::= BITS { zero(0), large(128), maximum(524279) }
+
+badEnumObject OBJECT-TYPE
+    SYNTAX BadEnumAlias ACCESS read-only STATUS mandatory
+    DESCRIPTION "Invalid enum metadata stays unresolved."
+    DEFVAL { zero } ::= { root 1 }
+badBitsObject OBJECT-TYPE
+    SYNTAX BadBitsAlias ACCESS read-only STATUS mandatory
+    DESCRIPTION "Invalid BITS metadata stays unresolved."
+    DEFVAL { { zero } } ::= { root 2 }
+badInlineObject OBJECT-TYPE
+    SYNTAX INTEGER { bad(9223372036854775808), good(1) }
+    ACCESS read-only STATUS mandatory DESCRIPTION "Invalid inline enum."
+    DEFVAL { 1 } ::= { root 3 }
+badRestrictedObject OBJECT-TYPE
+    SYNTAX BadEnumRestricted ACCESS read-only STATUS mandatory DESCRIPTION "Invalid named parent."
+    DEFVAL { child } ::= { root 18 }
+badRefinedBitsObject OBJECT-TYPE
+    SYNTAX BadBitsRefinementAlias ACCESS read-only STATUS mandatory DESCRIPTION "Invalid refined BITS."
+    DEFVAL { { good } } ::= { root 19 }
+badInlineBitsObject OBJECT-TYPE
+    SYNTAX ValidBits { huge(524280), good(2) } ACCESS read-only STATUS mandatory DESCRIPTION "Invalid inline refined BITS."
+    DEFVAL { { good } } ::= { root 22 }
+badPositiveDefault OBJECT-TYPE
+    SYNTAX INTEGER ACCESS read-only STATUS mandatory DESCRIPTION "Overflow default."
+    DEFVAL { 18446744073709551616 } ::= { root 5 }
+badNegativeDefault OBJECT-TYPE
+    SYNTAX INTEGER ACCESS read-only STATUS mandatory DESCRIPTION "Overflow default."
+    DEFVAL { -9223372036854775809 } ::= { root 6 }
+badOidDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid tail."
+    DEFVAL { { root 4294967296 } } ::= { root 7 }
+badKnownDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid known root."
+    DEFVAL { { root(4294967296) 1 } } ::= { root 8 }
+badQualifiedDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid qualified root."
+    DEFVAL { { INVALID-NUMERIC-MIB.root(4294967296) 1 } } ::= { root 14 }
+validQualifiedDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Valid qualified root."
+    DEFVAL { { INVALID-NUMERIC-MIB.root 1 } } ::= { root 15 }
+badBinaryDefault OBJECT-TYPE
+    SYNTAX OCTET STRING ACCESS read-only STATUS mandatory DESCRIPTION "Invalid binary digit."
+    DEFVAL { '1201'B } ::= { root 16 }
+badReferenceDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid dependency."
+    DEFVAL { badPlain } ::= { root 17 }
+validDefault OBJECT-TYPE
+    SYNTAX INTEGER ACCESS read-only STATUS mandatory DESCRIPTION "Valid zero default."
+    DEFVAL { 0 } ::= { root 11 }
+validUnsignedDefault OBJECT-TYPE
+    SYNTAX Counter64 ACCESS read-only STATUS mandatory DESCRIPTION "Valid unsigned maximum."
+    DEFVAL { 18446744073709551615 } ::= { root 12 }
+validSignedDefault OBJECT-TYPE
+    SYNTAX INTEGER ACCESS read-only STATUS mandatory DESCRIPTION "Valid signed minimum."
+    DEFVAL { -9223372036854775808 } ::= { root 13 }
+
+badTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF BadEntry ACCESS not-accessible STATUS mandatory
+    DESCRIPTION "Invalid index type." ::= { root 20 }
+badEntry OBJECT-TYPE
+    SYNTAX BadEntry ACCESS not-accessible STATUS mandatory
+    DESCRIPTION "Invalid index type." INDEX { badIndex } ::= { badTable 1 }
+BadEntry ::= SEQUENCE { badIndex BadEnumAlias, badValue INTEGER }
+badIndex OBJECT-TYPE
+    SYNTAX BadEnumAlias ACCESS read-only STATUS mandatory
+    DESCRIPTION "Invalid index type." ::= { badEntry 1 }
+badValue OBJECT-TYPE
+    SYNTAX INTEGER ACCESS read-only STATUS mandatory
+    DESCRIPTION "Value." ::= { badEntry 2 }
+
+rangeTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF RangeEntry ACCESS not-accessible STATUS mandatory
+    DESCRIPTION "Incomplete range." ::= { root 21 }
+rangeEntry OBJECT-TYPE
+    SYNTAX RangeEntry ACCESS not-accessible STATUS mandatory
+    DESCRIPTION "Incomplete range." INDEX { rangeIndex } ::= { rangeTable 1 }
+RangeEntry ::= SEQUENCE { rangeIndex OCTET STRING, rangeValue INTEGER }
+rangeIndex OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (18446744073709551616))
+    ACCESS read-only STATUS mandatory DESCRIPTION "Unknown size." ::= { rangeEntry 1 }
+rangeValue OBJECT-TYPE
+    SYNTAX INTEGER ACCESS read-only STATUS mandatory
+    DESCRIPTION "Value." ::= { rangeEntry 2 }
+
+badTrap TRAP-TYPE ENTERPRISE root DESCRIPTION "Invalid trap."
+    ::= 4294967296
+validTrapZero TRAP-TYPE ENTERPRISE root DESCRIPTION "Valid trap zero."
+    ::= 0
+validTrapMaximum TRAP-TYPE ENTERPRISE root DESCRIPTION "Valid trap maximum."
+    ::= 4294967295
+negativeTailDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid negative tail."
+    DEFVAL { { root -4294967296 2 } } ::= { root 31 }
+negativeSmallDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid negative small tail."
+    DEFVAL { { root -1 2 } } ::= { root 32 }
+negativeNamedDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid negative named tail."
+    DEFVAL { { root negative(-1) 2 } } ::= { root 33 }
+negativeQualifiedDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid negative qualified tail."
+    DEFVAL { { root INVALID-NUMERIC-MIB.negative(-4294967296) 2 } } ::= { root 34 }
+negativeFirstDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid negative first arc."
+    DEFVAL { { -1 2 } } ::= { root 35 }
+negativeNamedRootDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid negative named root."
+    DEFVAL { { root(-1) 2 } } ::= { root 36 }
+negativeQualifiedRootDefault OBJECT-TYPE
+    SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory DESCRIPTION "Invalid negative qualified root."
+    DEFVAL { { INVALID-NUMERIC-MIB.root(-4294967296) 2 } } ::= { root 37 }
+after OBJECT IDENTIFIER ::= { root 30 }
+END

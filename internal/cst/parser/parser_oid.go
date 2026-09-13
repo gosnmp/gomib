@@ -19,7 +19,7 @@ func (p *Parser) parseOidValue() (*cst.OidValueNode, *types.SpanDiagnostic) {
 
 	for !p.check(lexer.TokRBrace) && !p.isEOF() {
 		kind := p.peek().Kind
-		if kind == lexer.TokNumber || kind == lexer.TokLowercaseIdent || kind == lexer.TokUppercaseIdent {
+		if kind == lexer.TokNumber || kind == lexer.TokNegativeNumber || kind == lexer.TokLowercaseIdent || kind == lexer.TokUppercaseIdent {
 			comp, err := p.parseOidComponent()
 			if err != nil {
 				return nil, err
@@ -50,7 +50,7 @@ func (p *Parser) parseOidValue() (*cst.OidValueNode, *types.SpanDiagnostic) {
 func (p *Parser) parseOidComponent() (cst.OidComponentNode, *types.SpanDiagnostic) {
 	start := p.currentSpan().Start
 
-	if p.check(lexer.TokNumber) {
+	if p.check(lexer.TokNumber) || p.check(lexer.TokNegativeNumber) {
 		numTok := p.advance()
 		return cst.OidComponentNode{
 			Number: numTok,
@@ -71,7 +71,7 @@ func (p *Parser) parseOidComponent() (cst.OidComponentNode, *types.SpanDiagnosti
 
 		if p.check(lexer.TokLParen) {
 			lparen := p.advance()
-			numTok, err := p.expect(lexer.TokNumber)
+			numTok, err := p.parseOidNumber()
 			if err != nil {
 				return cst.OidComponentNode{}, err
 			}
@@ -101,7 +101,7 @@ func (p *Parser) parseOidComponent() (cst.OidComponentNode, *types.SpanDiagnosti
 	// Named number: name(number)
 	if p.check(lexer.TokLParen) {
 		lparen := p.advance()
-		numTok, err := p.expect(lexer.TokNumber)
+		numTok, err := p.parseOidNumber()
 		if err != nil {
 			return cst.OidComponentNode{}, err
 		}
@@ -123,4 +123,12 @@ func (p *Parser) parseOidComponent() (cst.OidComponentNode, *types.SpanDiagnosti
 		Name: firstTok,
 		Span: types.NewSpan(start, p.lastEnd),
 	}, nil
+}
+
+// parseOidNumber retains signed numeric tokens for checked unsigned lowering.
+func (p *Parser) parseOidNumber() (cst.SyntaxToken, *types.SpanDiagnostic) {
+	if p.check(lexer.TokNegativeNumber) {
+		return p.advance(), nil
+	}
+	return p.expect(lexer.TokNumber)
 }

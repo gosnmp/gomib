@@ -519,7 +519,7 @@ func checkIndexConstraints(ctx *resolverContext, objRefs []objectTypeRef) {
 			}
 
 			// INDEX elements should not have DEFVAL (RFC 2578 s7.7).
-			if !idxObj.DefaultValue().IsZero() {
+			if span := idxObj.DefaultValueSpan(); span.Start < span.End {
 				ctx.EmitDiagnostic(types.DiagIndexDefval,
 					ref.mod, item.Span,
 					fmt.Sprintf("INDEX %q of %q has a DEFVAL", item.Object, obj.Name))

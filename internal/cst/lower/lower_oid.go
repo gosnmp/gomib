@@ -29,8 +29,8 @@ func (l *lowerer) lowerOidComponent(comp *cst.OidComponentNode) module.OidCompon
 		c.Name = l.text(comp.Name)
 	}
 	if !comp.Number.IsZero() {
-		c.Number = l.convertU32(comp.Number)
-		c.HasNumber = true
+		c.Number, c.HasNumber = l.convertU32(comp.Number)
+		c.Invalid = !c.HasNumber
 	}
 	return c
 }

@@ -536,6 +536,13 @@ nonfatal diagnostics from both collection and failure checks; effective fatal
 diagnostics cannot be suppressed. `SilentConfig()` retains only effective fatal
 diagnostics unless its `FailAt` threshold is raised.
 
+Numeric recovery preserves invalid values as unresolved metadata. Overflowing
+OID arcs and trap numbers do not register nodes; invalid enum/BITS expressions
+and their dependent types have an unknown base, and cannot compile an index
+schema. Invalid defaults remain unset. These rules also apply when diagnostics
+are suppressed. Source spans and the lossless syntax tree retain the written
+tokens, and unrelated definitions continue to resolve.
+
 CLI equivalents follow the same split:
 
 - `gomib load --strict` and `gomib load --permissive` change resolver behavior.

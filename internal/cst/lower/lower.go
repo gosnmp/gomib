@@ -61,27 +61,27 @@ func (l *lowerer) stripQuotes(tok cst.SyntaxToken) string {
 }
 
 // convertU32 parses a number token as uint32.
-func (l *lowerer) convertU32(tok cst.SyntaxToken) uint32 {
+func (l *lowerer) convertU32(tok cst.SyntaxToken) (uint32, bool) {
 	text := l.text(tok)
 	v, err := strconv.ParseUint(text, 10, 32)
 	if err != nil {
 		l.EmitDiagnostic(types.DiagInvalidU32, tok.Span,
 			fmt.Sprintf("invalid number %q (not a valid u32)", text))
-		return 0
+		return 0, false
 	}
-	return uint32(v)
+	return uint32(v), true
 }
 
 // convertI64 parses a number token as int64.
-func (l *lowerer) convertI64(tok cst.SyntaxToken) int64 {
+func (l *lowerer) convertI64(tok cst.SyntaxToken) (int64, bool) {
 	text := l.text(tok)
 	v, err := strconv.ParseInt(text, 10, 64)
 	if err != nil {
 		l.EmitDiagnostic(types.DiagInvalidI64, tok.Span,
 			fmt.Sprintf("invalid number %q (not a valid i64)", text))
-		return 0
+		return 0, false
 	}
-	return v
+	return v, true
 }
 
 // detectLanguage determines the SMI version from explicit base-module identity,

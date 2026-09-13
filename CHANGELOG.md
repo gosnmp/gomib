@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Preserve unresolved numeric metadata instead of zero placeholders for OIDs, trap numbers, enum/BITS types and defaults; reject derived index schemas with invalid types.
+- Reject unresolved emitted types, syntax refinements and written defaults before canonical SMI output; retain capability variation DEFVAL source spans.
+- Resolve qualified OID default roots and retain unresolved defaults for invalid values or unavailable types.
+
 ### Breaking Changes
 
 - Limit nested type expressions to 64 parser levels, including the innermost type; report `type-nesting-limit` and omit affected semantic definitions while retaining lossless CST recovery tokens

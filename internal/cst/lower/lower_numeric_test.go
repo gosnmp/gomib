@@ -79,6 +79,51 @@ func TestIntegralOverflowDiagnostics(t *testing.T) {
 	testutil.Equal(t, uint64(18446744073709551615), unsigned.Value, "valid unsigned default")
 }
 
+func TestNegativeOidDefaultComponents(t *testing.T) {
+	for _, expression := range []string{"root -1 2", "root -4294967296 2", "root(-1) 2", "TEST-MIB.root(-1) 2", "-1 2"} {
+		t.Run(expression, func(t *testing.T) {
+			source := `TEST-MIB DEFINITIONS ::= BEGIN
+bad OBJECT-TYPE SYNTAX OBJECT IDENTIFIER ACCESS read-only STATUS mandatory
+DESCRIPTION "Bad." DEFVAL { { ` + expression + ` } } ::= { iso 3 }
+END`
+			mod := parseMods(t, source)[0]
+			if len(mod.ObjectTypes) != 1 {
+				t.Fatalf("object lost: %+v", mod.ObjectTypes)
+			}
+			dv, ok := mod.ObjectTypes[0].DefVal.(*module.DefValOidValue)
+			if !ok {
+				t.Fatalf("default = %T", mod.ObjectTypes[0].DefVal)
+			}
+			invalid := 0
+			for _, comp := range dv.Components {
+				if comp.Invalid {
+					invalid++
+					if comp.HasNumber {
+						t.Fatal("invalid component has operational number")
+					}
+				}
+			}
+			if invalid != 1 {
+				t.Fatalf("invalid components = %d: %+v", invalid, dv.Components)
+			}
+			numeric := 0
+			for _, diag := range mod.Diagnostics {
+				if diag.Code == types.DiagInvalidU32 {
+					numeric++
+					line := strings.Split(source, "\n")[diag.Line-1]
+					token := line[diag.Column-1 : diag.EndColumn-1]
+					if token != "-1" && token != "-4294967296" {
+						t.Fatalf("invalid-u32 source = %q", token)
+					}
+				}
+			}
+			if numeric != 1 {
+				t.Fatalf("numeric diagnostics = %d", numeric)
+			}
+		})
+	}
+}
+
 func TestBitsPositionBoundaries(t *testing.T) {
 	const source = `BITS-BOUNDARY-MIB DEFINITIONS ::= BEGIN
 Flags ::= BITS {
@@ -96,13 +141,8 @@ Flags ::= BITS {
 END
 `
 	mods := parseMods(t, source)
-	bits := mods[0].TypeDefs[0].Syntax.(*module.TypeSyntaxBits).NamedBits
-	wantPositions := []uint32{0, 0, 127, 128, 524279, 0, 0, 0, 0, 0}
-	if len(bits) != len(wantPositions) {
-		t.Fatalf("bits = %v", bits)
-	}
-	for i, want := range wantPositions {
-		testutil.Equal(t, want, bits[i].Position, "lowered BITS position")
+	if _, invalid := mods[0].TypeDefs[0].Syntax.(*module.TypeSyntaxInvalid); !invalid {
+		t.Fatalf("invalid BITS expression became operational: %#v", mods[0].TypeDefs[0].Syntax)
 	}
 	want := map[string][]int{
 		types.DiagBitsNumberNegative:    {3, 9, 11},
@@ -161,12 +201,14 @@ END
 					t.Errorf("%s override diagnostic = %+v", code, diag)
 				}
 			}
-			// This slice retains existing recovery independently of diagnostic policy.
-			testutil.Equal(t, int64(0), mods[0].TypeDefs[0].Syntax.(*module.TypeSyntaxIntegerEnum).NamedNumbers[0].Value, "enum recovery")
-			bits := mods[0].TypeDefs[1].Syntax.(*module.TypeSyntaxBits).NamedBits
-			testutil.Equal(t, uint32(0), bits[0].Position, "negative BITS recovery")
-			testutil.Equal(t, uint32(128), bits[1].Position, "large BITS retained")
-			testutil.Equal(t, uint32(0), bits[2].Position, "excessive BITS recovery")
+			for _, definition := range mods[0].TypeDefs {
+				if _, invalid := definition.Syntax.(*module.TypeSyntaxInvalid); !invalid {
+					t.Errorf("%s numeric recovery became operational", definition.Name)
+				}
+			}
+			if !mods[0].ValueAssignments[0].Oid.Components[1].Invalid {
+				t.Fatal("OID overflow lost invalid state")
+			}
 		})
 	}
 }
@@ -228,7 +270,7 @@ func TestOidDefaultComponentForms(t *testing.T) {
 		{"named root", "root 6 1", []module.OidComponent{{Name: "root"}, {Number: 6, HasNumber: true}, {Number: 1, HasNumber: true}}},
 		{"numbered root", "root(3) 6 1", []module.OidComponent{{Name: "root", Number: 3, HasNumber: true}, {Number: 6, HasNumber: true}, {Number: 1, HasNumber: true}}},
 		{"qualified tail", "root TEST-MIB.child(6) 1", []module.OidComponent{{Name: "root"}, {Module: "TEST-MIB", Name: "child", Number: 6, HasNumber: true}, {Number: 1, HasNumber: true}}},
-		{"qualified root recovery", "TEST-MIB.root 6 1", []module.OidComponent{{Name: "TEST-MIB"}, {Name: "root"}, {Number: 6, HasNumber: true}, {Number: 1, HasNumber: true}}},
+		{"qualified root", "TEST-MIB.root 6 1", []module.OidComponent{{Module: "TEST-MIB", Name: "root"}, {Number: 6, HasNumber: true}, {Number: 1, HasNumber: true}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			source := fmt.Sprintf(`TEST-MIB DEFINITIONS ::= BEGIN

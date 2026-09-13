@@ -60,6 +60,7 @@ func NewOidAssignment(components []OidComponent, span types.Span) OidAssignment 
 // references, and HasNumber indicates whether Number carries a valid arc value.
 // HasNumber is needed because arc 0 is valid (ccitt(0), zeroDotZero).
 type OidComponent struct {
+	Invalid   bool       // numeric token could not be represented; no component may resolve
 	Module    string     // non-empty for module-qualified references
 	Name      string     // non-empty for named references
 	Number    uint32     // arc value; valid only when HasNumber is true
@@ -74,6 +75,18 @@ type TypeSyntax interface {
 	typeSyntax()
 	SyntaxSpan() types.Span
 }
+
+// TypeSyntaxInvalid preserves the location of a type expression whose numeric
+// metadata cannot be represented. It must not inherit a primitive type or expose
+// a partial enumeration as complete. The source document retains the tokens.
+type TypeSyntaxInvalid struct {
+	Span types.Span
+}
+
+func (*TypeSyntaxInvalid) typeSyntax() {}
+
+// SyntaxSpan returns the source span of this type syntax.
+func (s *TypeSyntaxInvalid) SyntaxSpan() types.Span { return s.Span }
 
 // TypeSyntaxTypeRef is a reference to a named type, e.g. Integer32.
 type TypeSyntaxTypeRef struct {

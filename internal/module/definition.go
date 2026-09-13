@@ -122,8 +122,9 @@ func (d *Notification) IsTrap() bool { return d.TrapInfo != nil }
 
 // TrapInfo holds fields specific to SMIv1 TRAP-TYPE definitions.
 type TrapInfo struct {
-	Enterprise string
-	TrapNumber uint32
+	InvalidNumber bool
+	Enterprise    string
+	TrapNumber    uint32
 }
 
 // TypeDefSpans holds source byte ranges for each clause in a type definition.
@@ -251,6 +252,7 @@ type Variation struct {
 	Access           *types.Access
 	CreationRequires []NameRef
 	DefVal           DefVal
+	DefValSpan       types.Span
 	Description      string
 	Span             types.Span
 }

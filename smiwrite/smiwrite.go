@@ -44,6 +44,8 @@ func WithSequences(v bool) Option {
 }
 
 // Write emits a single module from m as canonical SMIv2 text.
+// Unresolved object OIDs, emitted types, syntax refinements, or written defaults cause an
+// error before any output. Canonical output is not a lossless source format.
 func Write(w io.Writer, m *mib.Mib, moduleName string, opts ...Option) error {
 	cfg := defaults()
 	for _, o := range opts {
@@ -53,22 +55,32 @@ func Write(w io.Writer, m *mib.Mib, moduleName string, opts ...Option) error {
 	if mod == nil {
 		return fmt.Errorf("module not found: %s", moduleName)
 	}
+	if err := validateModule(mod, cfg); err != nil {
+		return err
+	}
 	e := newEmitter(w, m, cfg)
 	return e.emitModule(mod)
 }
 
 // WriteAll emits multiple modules from m as canonical SMIv2 text,
-// separated by blank lines.
+// separated by blank lines. All requested modules are validated before output.
 func WriteAll(w io.Writer, m *mib.Mib, moduleNames []string, opts ...Option) error {
 	cfg := defaults()
 	for _, o := range opts {
 		o(&cfg)
 	}
+	modules := make([]*mib.Module, len(moduleNames))
 	for i, name := range moduleNames {
 		mod := m.Module(name)
 		if mod == nil {
 			return fmt.Errorf("module not found: %s", name)
 		}
+		if err := validateModule(mod, cfg); err != nil {
+			return err
+		}
+		modules[i] = mod
+	}
+	for i, mod := range modules {
 		if i > 0 {
 			if _, err := fmt.Fprintln(w); err != nil {
 				return err

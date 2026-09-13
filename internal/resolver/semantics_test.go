@@ -42,135 +42,6 @@ func TestIsBareTypeIndex(t *testing.T) {
 	}
 }
 
-func TestIsOIDType(t *testing.T) {
-	// Build a resolver context with base modules so type lookups work.
-	ctx := newResolverContext(nil, model.ResolverNormal, model.DefaultConfig())
-	registerModules(ctx, testBaseModules())
-	resolveTypes(ctx)
-	// Use SNMPv2-TC module for lookups (where AutonomousType etc. are defined).
-	var tcMod *module.Module
-	for _, m := range ctx.modules {
-		if m.Name == "SNMPv2-TC" {
-			tcMod = m
-			break
-		}
-	}
-
-	tests := []struct {
-		name   string
-		syntax module.TypeSyntax
-		want   bool
-	}{
-		{
-			name:   "TypeSyntaxObjectIdentifier",
-			syntax: &module.TypeSyntaxObjectIdentifier{},
-			want:   true,
-		},
-		{
-			name:   "TypeRef OBJECT IDENTIFIER",
-			syntax: &module.TypeSyntaxTypeRef{Name: "OBJECT IDENTIFIER"},
-			want:   true,
-		},
-		{
-			name:   "TypeRef AutonomousType",
-			syntax: &module.TypeSyntaxTypeRef{Name: "AutonomousType"},
-			want:   true,
-		},
-		{
-			name:   "TypeRef VariablePointer",
-			syntax: &module.TypeSyntaxTypeRef{Name: "VariablePointer"},
-			want:   true,
-		},
-		{
-			name:   "TypeRef RowPointer",
-			syntax: &module.TypeSyntaxTypeRef{Name: "RowPointer"},
-			want:   true,
-		},
-		{
-			name:   "TypeRef TDomain",
-			syntax: &module.TypeSyntaxTypeRef{Name: "TDomain"},
-			want:   true,
-		},
-		{
-			name:   "TypeRef Integer32",
-			syntax: &module.TypeSyntaxTypeRef{Name: "Integer32"},
-			want:   false,
-		},
-		{
-			name:   "TypeRef DisplayString",
-			syntax: &module.TypeSyntaxTypeRef{Name: "DisplayString"},
-			want:   false,
-		},
-		{
-			name: "Constrained wrapping ObjectIdentifier",
-			syntax: &module.TypeSyntaxConstrained{
-				Base: &module.TypeSyntaxObjectIdentifier{},
-			},
-			want: true,
-		},
-		{
-			name: "Constrained wrapping TypeRef OBJECT IDENTIFIER",
-			syntax: &module.TypeSyntaxConstrained{
-				Base: &module.TypeSyntaxTypeRef{Name: "OBJECT IDENTIFIER"},
-			},
-			want: true,
-		},
-		{
-			name: "Constrained wrapping TypeRef AutonomousType",
-			syntax: &module.TypeSyntaxConstrained{
-				Base: &module.TypeSyntaxTypeRef{Name: "AutonomousType"},
-			},
-			want: true,
-		},
-		{
-			name: "Nested constrained wrapping ObjectIdentifier",
-			syntax: &module.TypeSyntaxConstrained{
-				Base: &module.TypeSyntaxConstrained{
-					Base: &module.TypeSyntaxObjectIdentifier{},
-				},
-			},
-			want: true,
-		},
-		{
-			name: "Constrained wrapping OctetString",
-			syntax: &module.TypeSyntaxConstrained{
-				Base: &module.TypeSyntaxOctetString{},
-			},
-			want: false,
-		},
-		{
-			name:   "IntegerEnum",
-			syntax: &module.TypeSyntaxIntegerEnum{},
-			want:   false,
-		},
-		{
-			name:   "Bits",
-			syntax: &module.TypeSyntaxBits{},
-			want:   false,
-		},
-		{
-			name:   "OctetString",
-			syntax: &module.TypeSyntaxOctetString{},
-			want:   false,
-		},
-		{
-			name:   "SequenceOf",
-			syntax: &module.TypeSyntaxSequenceOf{},
-			want:   false,
-		},
-		{
-			name:   "Sequence",
-			syntax: &module.TypeSyntaxSequence{},
-			want:   false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			testutil.Equal(t, tt.want, isOIDType(ctx, tcMod, tt.syntax), "isOIDType()")
-		})
-	}
-}
-
 func TestHexToBytes(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -248,7 +119,7 @@ func TestConvertDefVal(t *testing.T) {
 	t.Run("integer", func(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
-		syntax := &module.TypeSyntaxTypeRef{Name: "Integer32"}
+		base := model.BaseInteger32
 
 		tests := []struct {
 			name  string
@@ -261,7 +132,7 @@ func TestConvertDefVal(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				dv := convertDefVal(ctx, &module.DefValInteger{Value: tt.input}, mod, syntax, types.Span{})
+				dv := convertDefVal(ctx, &module.DefValInteger{Value: tt.input}, mod, base, types.Span{})
 				testutil.NotNil(t, dv, "convertDefVal returned nil")
 				testutil.Equal(t, model.DefValKindInt, dv.Kind(), "kind")
 				v, ok := model.DefValAs[int64](*dv)
@@ -275,9 +146,9 @@ func TestConvertDefVal(t *testing.T) {
 	t.Run("unsigned", func(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
-		syntax := &module.TypeSyntaxTypeRef{Name: "Counter64"}
+		base := model.BaseCounter64
 
-		dv := convertDefVal(ctx, &module.DefValUnsigned{Value: 12345}, mod, syntax, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValUnsigned{Value: 12345}, mod, base, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindUint, dv.Kind(), "kind")
 		v, ok := model.DefValAs[uint64](*dv)
@@ -290,7 +161,7 @@ func TestConvertDefVal(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
 
-		dv := convertDefVal(ctx, &module.DefValString{Value: "public"}, mod, &module.TypeSyntaxTypeRef{Name: "DisplayString"}, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValString{Value: "public"}, mod, model.BaseOctetString, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindString, dv.Kind(), "kind")
 		v, ok := model.DefValAs[string](*dv)
@@ -303,7 +174,7 @@ func TestConvertDefVal(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
 
-		dv := convertDefVal(ctx, &module.DefValHexString{Value: "FF00"}, mod, &module.TypeSyntaxOctetString{}, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValHexString{Value: "FF00"}, mod, model.BaseOctetString, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindBytes, dv.Kind(), "kind")
 		bytes, ok := model.DefValAs[[]byte](*dv)
@@ -320,7 +191,7 @@ func TestConvertDefVal(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
 
-		dv := convertDefVal(ctx, &module.DefValBinaryString{Value: "10101010"}, mod, &module.TypeSyntaxOctetString{}, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValBinaryString{Value: "10101010"}, mod, model.BaseOctetString, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindBytes, dv.Kind(), "kind")
 		bytes, ok := model.DefValAs[[]byte](*dv)
@@ -333,14 +204,9 @@ func TestConvertDefVal(t *testing.T) {
 	t.Run("enum", func(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
-		syntax := &module.TypeSyntaxIntegerEnum{
-			NamedNumbers: []module.NamedNumber{
-				{Name: "enabled", Value: 1},
-				{Name: "disabled", Value: 2},
-			},
-		}
+		base := model.BaseInteger32
 
-		dv := convertDefVal(ctx, &module.DefValEnum{Name: "enabled"}, mod, syntax, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValEnum{Name: "enabled"}, mod, base, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindEnum, dv.Kind(), "kind")
 		v, ok := model.DefValAs[string](*dv)
@@ -359,8 +225,8 @@ func TestConvertDefVal(t *testing.T) {
 		model.SetNodeName(grandchild, "myTarget")
 		ctx.registerModuleNodeSymbol(mod, "myTarget", grandchild)
 
-		syntax := &module.TypeSyntaxObjectIdentifier{}
-		dv := convertDefVal(ctx, &module.DefValEnum{Name: "myTarget"}, mod, syntax, types.Span{})
+		base := model.BaseObjectIdentifier
+		dv := convertDefVal(ctx, &module.DefValEnum{Name: "myTarget"}, mod, base, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindOID, dv.Kind(), "kind")
 		oid, ok := model.DefValAs[model.OID](*dv)
@@ -370,22 +236,21 @@ func TestConvertDefVal(t *testing.T) {
 		testutil.Equal(t, uint32(3), oid[1], "oid[1]")
 	})
 
-	t.Run("enum on OID type falls back when unresolved", func(t *testing.T) {
+	t.Run("enum on OID type remains unset when unresolved", func(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
-		syntax := &module.TypeSyntaxObjectIdentifier{}
+		base := model.BaseObjectIdentifier
 
-		dv := convertDefVal(ctx, &module.DefValEnum{Name: "unknownOid"}, mod, syntax, types.Span{})
-		testutil.NotNil(t, dv, "convertDefVal returned nil")
-		testutil.Equal(t, model.DefValKindEnum, dv.Kind(), "kind")
+		dv := convertDefVal(ctx, &module.DefValEnum{Name: "unknownOid"}, mod, base, types.Span{})
+		testutil.Nil(t, dv, "unresolved OID default must not become an enum")
 	})
 
 	t.Run("bits", func(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
-		syntax := &module.TypeSyntaxBits{}
+		base := model.BaseBits
 
-		dv := convertDefVal(ctx, &module.DefValBits{Labels: []string{"flag1", "flag2"}}, mod, syntax, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValBits{Labels: []string{"flag1", "flag2"}}, mod, base, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindBits, dv.Kind(), "kind")
 		labels, ok := model.DefValAs[[]string](*dv)
@@ -399,9 +264,9 @@ func TestConvertDefVal(t *testing.T) {
 	t.Run("bits empty", func(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
-		syntax := &module.TypeSyntaxBits{}
+		base := model.BaseBits
 
-		dv := convertDefVal(ctx, &module.DefValBits{Labels: []string{}}, mod, syntax, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValBits{Labels: []string{}}, mod, base, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, "{ }", dv.Raw(), "raw")
 	})
@@ -415,7 +280,7 @@ func TestConvertDefVal(t *testing.T) {
 		model.SetNodeName(child, "sysName")
 		ctx.registerModuleNodeSymbol(mod, "sysName", child)
 
-		dv := convertDefVal(ctx, &module.DefValOidRef{Name: "sysName"}, mod, nil, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValOidRef{Name: "sysName"}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindOID, dv.Kind(), "kind")
 	})
@@ -424,7 +289,7 @@ func TestConvertDefVal(t *testing.T) {
 		ctx := newTestContext()
 		mod := &module.Module{Name: "TEST-MIB"}
 
-		dv := convertDefVal(ctx, &module.DefValOidRef{Name: "missing"}, mod, nil, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValOidRef{Name: "missing"}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.Nil(t, dv, "expected nil for unresolved OID ref, got")
 	})
 
@@ -432,7 +297,7 @@ func TestConvertDefVal(t *testing.T) {
 		ctx := newResolverContext(nil, model.ResolverNormal, model.VerboseConfig())
 		mod := &module.Module{Name: "TEST-MIB"}
 
-		dv := convertDefVal(ctx, &module.DefValUnparsed{}, mod, nil, types.Span{})
+		dv := convertDefVal(ctx, &module.DefValUnparsed{}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.Nil(t, dv, "expected nil for unparsed DefVal, got")
 
 		hasDiag(t, ctx.Diagnostics(), types.DiagDefvalUnresolved)
@@ -1201,6 +1066,8 @@ func TestResolveSyntaxConstraints(t *testing.T) {
 	})
 
 	t.Run("bits syntax keeps bit labels", func(t *testing.T) {
+		ctx.snmpv2SMIModule = &module.Module{Name: "SNMPv2-SMI"}
+		seedPrimitiveTypes(ctx)
 		sc := resolveSyntaxConstraints(ctx, &module.TypeSyntaxBits{
 			NamedBits: []module.NamedBit{
 				{Name: "featureA", Position: 0},
@@ -1555,7 +1422,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 				{Number: 42, HasNumber: true},
 				{Number: 1, HasNumber: true},
 			},
-		}, mod, nil, types.Span{})
+		}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
 		testutil.Equal(t, model.DefValKindOID, dv.Kind(), "kind")
 		oid, ok := model.DefValAs[model.OID](*dv)
@@ -1569,7 +1436,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 			Components: []module.OidComponent{
 				{Name: "enterprises"},
 			},
-		}, mod, nil, types.Span{})
+		}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
 		oid, ok := model.DefValAs[model.OID](*dv)
 		testutil.True(t, ok, "expected OID value")
@@ -1583,7 +1450,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 				{Name: "enterprises", Number: 1, HasNumber: true},
 				{Number: 5, HasNumber: true},
 			},
-		}, mod, nil, types.Span{})
+		}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
 		oid, ok := model.DefValAs[model.OID](*dv)
 		testutil.True(t, ok, "expected OID value")
@@ -1596,7 +1463,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 			Components: []module.OidComponent{
 				{Module: "SNMPv2-SMI", Name: "enterprises"},
 			},
-		}, mod, nil, types.Span{})
+		}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
 		testutil.Equal(t, model.DefValKindOID, dv.Kind(), "kind")
 		oid, ok := model.DefValAs[model.OID](*dv)
@@ -1615,7 +1482,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 					HasNumber: true,
 				},
 			},
-		}, mod, nil, types.Span{})
+		}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
 		testutil.Equal(t, model.DefValKindOID, dv.Kind(), "kind")
 		oid, ok := model.DefValAs[model.OID](*dv)
@@ -1629,14 +1496,14 @@ func TestConvertDefValOidValue(t *testing.T) {
 			Components: []module.OidComponent{
 				{Name: "nonexistent"},
 			},
-		}, mod, nil, types.Span{})
+		}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.Nil(t, dv, "expected nil for unresolved name, got")
 	})
 
 	t.Run("returns nil for empty components", func(t *testing.T) {
 		dv := convertDefVal(ctx, &module.DefValOidValue{
 			Components: nil,
-		}, mod, nil, types.Span{})
+		}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.Nil(t, dv, "expected nil for empty components, got")
 	})
 
@@ -1645,7 +1512,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 			Components: []module.OidComponent{
 				{Number: 1, HasNumber: true},
 			},
-		}, mod, nil, types.Span{})
+		}, mod, model.BaseObjectIdentifier, types.Span{})
 		testutil.Nil(t, dv, "expected nil when first component is numeric, got")
 	})
 }
@@ -1671,7 +1538,7 @@ func TestConvertDefValOidValueImportUse(t *testing.T) {
 				{Name: "importedRoot"},
 				{Number: 42, HasNumber: true},
 			},
-		}, importer, nil, types.Span{})
+		}, importer, model.BaseObjectIdentifier, types.Span{})
 
 		testutil.NotNil(t, dv, "expected imported root to resolve")
 		oid, ok := model.DefValAs[model.OID](*dv)
@@ -1687,7 +1554,7 @@ func TestConvertDefValOidValueImportUse(t *testing.T) {
 				{Module: "SOURCE-MIB", Name: "importedRoot"},
 				{Number: 42, HasNumber: true},
 			},
-		}, importer, nil, types.Span{})
+		}, importer, model.BaseObjectIdentifier, types.Span{})
 
 		testutil.NotNil(t, dv, "expected qualified root to resolve")
 		oid, ok := model.DefValAs[model.OID](*dv)

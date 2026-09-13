@@ -233,7 +233,7 @@ func (d trapTypeRef) defName() string {
 }
 
 func (d trapTypeRef) trapInfo() (enterprise string, trapNumber uint32, span types.Span, ok bool) {
-	if d.notif.TrapInfo == nil {
+	if d.notif.TrapInfo == nil || d.notif.TrapInfo.InvalidNumber {
 		return "", 0, types.Span{}, false
 	}
 	return d.notif.TrapInfo.Enterprise, d.notif.TrapInfo.TrapNumber, d.notif.Span, true
@@ -301,6 +301,12 @@ func tryResolveOidDefinition(ctx *resolverContext, def oidDefinition) bool {
 	if len(components) == 0 {
 		return false
 	}
+	// Reject the entire assignment before registering intermediate path names.
+	for _, component := range components {
+		if component.Invalid {
+			return false
+		}
+	}
 	var currentNode *model.Node
 	for idx, component := range components {
 		isLast := idx == len(components)-1
@@ -320,6 +326,8 @@ func tryResolveOidDefinition(ctx *resolverContext, def oidDefinition) bool {
 
 func resolveOidComponent(ctx *resolverContext, def oidDefinition, currentNode *model.Node, c module.OidComponent, isLast bool) (*model.Node, bool) {
 	switch {
+	case c.Invalid:
+		return nil, false
 	case c.Module != "" && c.HasNumber:
 		return resolveQualifiedNamedNumberComponent(ctx, def, currentNode, c.Module, c.Name, c.Number, isLast)
 	case c.Module != "":

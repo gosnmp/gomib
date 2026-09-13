@@ -27,7 +27,12 @@ func TestLoadIntegralOverflowDiagnostics(t *testing.T) {
 			testutil.Equal(t, 6, counts[types.DiagInvalidI64], "signed conversion diagnostics")
 			testutil.Equal(t, 10, counts[types.DiagInvalidU32], "OID/trap conversion diagnostics")
 			valid := requireObject(t, m, "problemValidUnsignedDefault")
-			testutil.Equal(t, "18446744073709551615", valid.DefaultValue().String(), "valid unsigned default")
+			if strictness == mib.ResolverStrict {
+				// Counter64 is not imported by this conversion fixture.
+				testutil.True(t, valid.DefaultValue().IsZero(), "unresolved type has no operational default")
+			} else {
+				testutil.Equal(t, "18446744073709551615", valid.DefaultValue().String(), "valid unsigned default")
+			}
 			after := m.Node("problemAfterOverflow")
 			if after == nil {
 				t.Fatal("missing definition following overflow")
@@ -91,7 +96,7 @@ END
 	}
 }
 
-func TestLoadQualifiedFirstOidDefaultRemainsUnresolved(t *testing.T) {
+func TestLoadQualifiedFirstOidDefault(t *testing.T) {
 	const input = `TEST-MIB DEFINITIONS ::= BEGIN
 root OBJECT IDENTIFIER ::= { iso 3 }
 obj OBJECT-TYPE
@@ -109,8 +114,9 @@ END
 	m, err := gomib.Load(context.Background(), gomib.WithSource(src), gomib.WithModules("TEST-MIB"), gomib.WithDiagnosticConfig(cfg))
 	testutil.NoError(t, err, "load qualified-root recovery")
 	obj := requireObject(t, m, "obj")
-	if !obj.DefaultValue().IsZero() {
-		t.Fatalf("qualified-first default = %+v, want unresolved", obj.DefaultValue())
+	value, ok := mib.DefValAs[mib.OID](obj.DefaultValue())
+	if !ok || value.String() != "1.3.6.1" {
+		t.Fatalf("qualified-first default = %+v", obj.DefaultValue())
 	}
 	var unresolved int
 	for _, diag := range m.Diagnostics() {
@@ -118,5 +124,5 @@ END
 			unresolved++
 		}
 	}
-	testutil.Equal(t, 1, unresolved, "unresolved default diagnostic")
+	testutil.Equal(t, 0, unresolved, "unresolved default diagnostic")
 }

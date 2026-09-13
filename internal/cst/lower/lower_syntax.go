@@ -82,29 +82,41 @@ func (l *lowerer) lowerIntegerEnum(n *cst.IntegerEnumSyntaxNode) module.TypeSynt
 		base = l.text(n.Base)
 	}
 
-	namedNumbers := l.lowerNamedNumbers(n.Values)
-
+	var namedNumbers []module.NamedNumber
+	invalid := false
 	seenNames := make(map[string]bool)
 	seenValues := make(map[int64]bool)
 	for i := range n.Values {
 		v := &n.Values[i]
-		name := namedNumbers[i].Name
-		value := namedNumbers[i].Value
+		name := l.text(v.Label)
+		value, valid := l.convertI64(v.Value)
 		if seenNames[name] {
 			l.EmitDiagnostic(types.DiagEnumNameRedefinition, v.Span,
 				fmt.Sprintf("duplicate enum name %q", name))
 		}
 		seenNames[name] = true
+		if !valid {
+			invalid = true
+			continue
+		}
+		if value < -1<<31 || value > 1<<31-1 {
+			l.EmitDiagnostic(types.DiagEnumValueOutOfRange, v.Value.Span,
+				fmt.Sprintf("enum value %d is outside the Integer32 range", value))
+		}
 		if seenValues[value] {
 			l.EmitDiagnostic(types.DiagEnumValueRedefinition, v.Span,
 				fmt.Sprintf("duplicate enum value %d", value))
 		}
 		seenValues[value] = true
+		number := module.NewNamedNumber(name, value, v.Span)
+		namedNumbers = append(namedNumbers, number)
 		if value == 0 {
-			l.zeroEnums = append(l.zeroEnums, namedNumbers[i])
+			l.zeroEnums = append(l.zeroEnums, number)
 		}
 	}
-
+	if invalid {
+		return &module.TypeSyntaxInvalid{Span: n.Span}
+	}
 	return &module.TypeSyntaxIntegerEnum{
 		Base:         base,
 		NamedNumbers: namedNumbers,
@@ -112,57 +124,45 @@ func (l *lowerer) lowerIntegerEnum(n *cst.IntegerEnumSyntaxNode) module.TypeSynt
 	}
 }
 
-func (l *lowerer) lowerNamedNumbers(values []cst.EnumValueNode) []module.NamedNumber {
-	var result []module.NamedNumber
-	for i := range values {
-		v := &values[i]
-		name := l.text(v.Label)
-		value := l.convertI64(v.Value)
-		if value < -1<<31 || value > 1<<31-1 {
-			l.EmitDiagnostic(types.DiagEnumValueOutOfRange, v.Value.Span,
-				fmt.Sprintf("enum value %d is outside the Integer32 range", value))
-		}
-		result = append(result, module.NewNamedNumber(name, value, v.Span))
-	}
-	return result
-}
-
 func (l *lowerer) lowerBits(n *cst.BitsSyntaxNode) module.TypeSyntax {
 	seenNames := make(map[string]bool)
 	seenPositions := make(map[int64]bool)
 	var namedBits []module.NamedBit
+	invalid := false
 	for i := range n.Values {
 		v := &n.Values[i]
 		name := l.text(v.Label)
-		pos := l.convertI64(v.Value)
+		pos, valid := l.convertI64(v.Value)
 
 		if seenNames[name] {
 			l.EmitDiagnostic(types.DiagBitsNameRedefinition, v.Span,
 				fmt.Sprintf("duplicate BITS name %q", name))
 		}
 		seenNames[name] = true
+		if !valid {
+			invalid = true
+			continue
+		}
 		if seenPositions[pos] {
 			l.EmitDiagnostic(types.DiagBitsValueRedefinition, v.Span,
 				fmt.Sprintf("duplicate BITS position %d", pos))
 		}
 		seenPositions[pos] = true
 
-		switch {
-		case pos < 0:
-			l.EmitDiagnostic(types.DiagBitsNumberNegative, v.Span,
-				fmt.Sprintf("negative BITS position %d for %q", pos, name))
-			pos = 0
-		case pos >= 65535*8:
-			l.EmitDiagnostic(types.DiagBitsNumberTooLarge, v.Span,
-				fmt.Sprintf("BITS position %d for %q exceeds maximum (%d)", pos, name, 65535*8-1))
-			pos = 0
-		case pos >= 128:
-			l.EmitDiagnostic(types.DiagBitsNumberLarge, v.Span,
-				fmt.Sprintf("BITS position %d for %q may cause interoperability problems", pos, name))
+		code, message, representable := types.BitsPositionDiagnostic(name, pos)
+		if code != "" {
+			l.EmitDiagnostic(code, v.Span, message)
+		}
+		if !representable {
+			invalid = true
+			continue
 		}
 		namedBits = append(namedBits, module.NewNamedBit(name, uint32(pos), v.Span))
 	}
 
+	if invalid {
+		return &module.TypeSyntaxInvalid{Span: n.Span}
+	}
 	return &module.TypeSyntaxBits{
 		NamedBits: namedBits,
 		Span:      n.Span,
@@ -172,6 +172,9 @@ func (l *lowerer) lowerBits(n *cst.BitsSyntaxNode) module.TypeSyntax {
 func (l *lowerer) lowerConstrained(n *cst.ConstrainedSyntaxNode) module.TypeSyntax {
 	base := l.lowerTypeSyntax(n.Base)
 	constraint := l.lowerConstraint(n.Constraint)
+	if _, invalid := base.(*module.TypeSyntaxInvalid); invalid {
+		return &module.TypeSyntaxInvalid{Span: n.Span}
+	}
 
 	return &module.TypeSyntaxConstrained{
 		Base:       base,

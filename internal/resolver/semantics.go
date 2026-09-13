@@ -234,23 +234,25 @@ func createResolvedObjects(ctx *resolverContext, objRefs []objectTypeRef) {
 			model.SetObjectType(resolved, t)
 		}
 
-		sizes, ranges := extractConstraints(obj.Syntax)
-		if len(sizes) > 0 {
-			model.SetObjectDeclaredSizes(resolved, sizes)
-			model.SetObjectEffectiveSizes(resolved, sizes)
-		}
-		if len(ranges) > 0 {
-			model.SetObjectDeclaredRanges(resolved, ranges)
-			model.SetObjectEffectiveRanges(resolved, ranges)
-		}
-		if _, isBits := obj.Syntax.(*module.TypeSyntaxBits); isBits {
-			model.SetObjectEffectiveBits(resolved, extractNamedValues(obj.Syntax))
-		} else {
-			model.SetObjectEffectiveEnums(resolved, extractNamedValues(obj.Syntax))
+		if resolved.Type() != nil && resolved.Type().EffectiveBase() != model.BaseUnknown {
+			sizes, ranges := extractConstraints(obj.Syntax)
+			if len(sizes) > 0 {
+				model.SetObjectDeclaredSizes(resolved, sizes)
+				model.SetObjectEffectiveSizes(resolved, sizes)
+			}
+			if len(ranges) > 0 {
+				model.SetObjectDeclaredRanges(resolved, ranges)
+				model.SetObjectEffectiveRanges(resolved, ranges)
+			}
+			if resolved.Type().EffectiveBase() == model.BaseBits {
+				model.SetObjectEffectiveBits(resolved, extractNamedValues(obj.Syntax))
+			} else {
+				model.SetObjectEffectiveEnums(resolved, extractNamedValues(obj.Syntax))
+			}
 		}
 
-		if obj.DefVal != nil {
-			model.SetObjectDefaultValue(resolved, convertDefVal(ctx, obj.DefVal, ref.mod, obj.Syntax, obj.Span))
+		if obj.DefVal != nil && resolved.Type() != nil && resolved.Type().EffectiveBase() != model.BaseUnknown {
+			model.SetObjectDefaultValue(resolved, convertDefVal(ctx, obj.DefVal, ref.mod, resolved.Type().EffectiveBase(), obj.Span))
 		}
 
 		computeEffectiveValues(resolved)
@@ -449,6 +451,9 @@ func createResolvedNotifications(ctx *resolverContext) {
 	created := 0
 	for _, ref := range collectNotificationRefs(ctx) {
 		notif := ref.notif
+		if notif.TrapInfo != nil && notif.TrapInfo.InvalidNumber {
+			continue
+		}
 
 		node, ok := ctx.lookupNode(ref.mod, notif.Name)
 		if !ok {
@@ -846,6 +851,7 @@ func convertSupportsModules(ctx *resolverContext, mod *module.Module, modules []
 			} else {
 				ov := model.ObjectVariation{
 					Object:      v.Name,
+					DefValSpan:  v.DefValSpan,
 					Description: v.Description,
 					Span:        v.Span,
 				}
@@ -857,11 +863,20 @@ func convertSupportsModules(ctx *resolverContext, mod *module.Module, modules []
 				if v.Access != nil {
 					ov.Access = v.Access
 				}
-				if v.DefVal != nil {
-					if dv := convertDefVal(ctx, v.DefVal, mod, v.Syntax, v.Span); dv != nil {
+				var defaultType *model.Type
+				if ov.Syntax != nil {
+					defaultType = ov.Syntax.Type
+				} else if node, ok := lookupConformanceNode(ctx, mod, m.ModuleName, v.Name); ok {
+					if obj := node.Object(); obj != nil {
+						defaultType = obj.Type()
+					}
+				}
+				if v.DefVal != nil && defaultType != nil && defaultType.EffectiveBase() != model.BaseUnknown {
+					if dv := convertDefVal(ctx, v.DefVal, mod, defaultType.EffectiveBase(), v.Span); dv != nil {
 						ov.DefVal = *dv
 					}
 				}
+
 				result[i].ObjectVariations = append(result[i].ObjectVariations, ov)
 			}
 		}
@@ -876,22 +891,29 @@ func convertSupportsModules(ctx *resolverContext, mod *module.Module, modules []
 // heuristic: variations with SYNTAX, WRITE-SYNTAX, CREATION-REQUIRES, or
 // DEFVAL are object variations.
 func isNotificationVariation(ctx *resolverContext, mod *module.Module, supportsModule string, v *module.Variation) bool {
-	// Try the SUPPORTS module first (most correct per RFC 2580).
-	if node, ok := ctx.lookupNodeByModuleName(supportsModule, v.Name); ok {
+	if node, ok := lookupConformanceNode(ctx, mod, supportsModule, v.Name); ok {
 		return node.Kind() == model.KindNotification
-	}
-	// Try the defining module's import chain.
-	if node, ok := ctx.lookupNode(mod, v.Name); ok {
-		return node.Kind() == model.KindNotification
-	}
-	// Permissive only: try global lookup.
-	if ctx.ResolverStrictness().AllowGlobalFallbacks() {
-		if node, ok := ctx.lookupNodeGlobal(v.Name); ok {
-			return node.Kind() == model.KindNotification
-		}
 	}
 	// Cannot resolve; fall back to syntactic heuristic.
 	return v.Syntax == nil && v.WriteSyntax == nil && len(v.CreationRequires) == 0 && v.DefVal == nil
+}
+
+func lookupConformanceNode(ctx *resolverContext, mod *module.Module, supportsModule, name string) (*model.Node, bool) {
+	// Try the SUPPORTS module first (most correct per RFC 2580).
+	if node, ok := ctx.lookupNodeByModuleName(supportsModule, name); ok {
+		return node, true
+	}
+	// Try the defining module's import chain.
+	if node, ok := ctx.lookupNode(mod, name); ok {
+		return node, true
+	}
+	// Permissive only: try global lookup.
+	if ctx.ResolverStrictness().AllowGlobalFallbacks() {
+		if node, ok := ctx.lookupNodeGlobal(name); ok {
+			return node, true
+		}
+	}
+	return nil, false
 }
 
 // convertNameRefs converts module-IR NameRefs to model NameRefs, preserving
@@ -967,6 +989,9 @@ func resolveSyntaxConstraints(ctx *resolverContext, syntax module.TypeSyntax, mo
 	if t, ok := resolveTypeSyntax(ctx, syntax, mod, ownerName, syntaxSpan); ok {
 		sc.Type = t
 	}
+	if sc.Type == nil || sc.Type.EffectiveBase() == model.BaseUnknown {
+		return sc
+	}
 	sc.Sizes, sc.Ranges = extractConstraints(syntax)
 	sc.DeclaredSizes = slices.Clone(sc.Sizes)
 	sc.DeclaredRanges = slices.Clone(sc.Ranges)
@@ -1004,7 +1029,7 @@ func resolveSyntaxConstraints(ctx *resolverContext, syntax module.TypeSyntax, mo
 			}
 		}
 	}
-	if _, isBits := syntax.(*module.TypeSyntaxBits); isBits {
+	if sc.Type.EffectiveBase() == model.BaseBits {
 		sc.Bits = extractNamedValues(syntax)
 	} else {
 		sc.Enums = extractNamedValues(syntax)
@@ -1033,6 +1058,9 @@ func resolveTypeSyntax(ctx *resolverContext, syntax module.TypeSyntax, mod *modu
 		// Named base type (e.g., TPSPRateType { kbps(1) })
 		if s.Base != "" {
 			if t, ok := ctx.resolveTypeForModule(mod, s.Base); ok {
+				if t.EffectiveBase() == model.BaseBits && !checkBitsRefinement(ctx, syntax, mod) {
+					return nil, false
+				}
 				return t, true
 			}
 			ctx.recordUnresolved(types.DiagTypeUnknown, mod, span,
@@ -1080,7 +1108,7 @@ func emitDefvalUnresolved(ctx *resolverContext, mod *module.Module, span types.S
 	ctx.EmitDiagnostic(types.DiagDefvalUnresolved, mod, span, message)
 }
 
-func convertDefVal(ctx *resolverContext, defval module.DefVal, mod *module.Module, syntax module.TypeSyntax, span types.Span) *model.DefVal {
+func convertDefVal(ctx *resolverContext, defval module.DefVal, mod *module.Module, base model.BaseType, span types.Span) *model.DefVal {
 	switch v := defval.(type) {
 	case *module.DefValInteger:
 		raw := strconv.FormatInt(v.Value, 10)
@@ -1106,24 +1134,25 @@ func convertDefVal(ctx *resolverContext, defval module.DefVal, mod *module.Modul
 		return &dv
 	case *module.DefValBinaryString:
 		raw := "'" + v.Value + "'B"
-		_, isBits := syntax.(*module.TypeSyntaxBits)
-		bytes, valid := binaryToBytes(v.Value, isBits)
+		bytes, valid := binaryToBytes(v.Value, base == model.BaseBits)
 		if !valid {
 			ctx.EmitDiagnostic(types.DiagMalformedBinDefval,
 				mod, span, fmt.Sprintf("binary DEFVAL contains non-binary digits: %q", raw))
+			return nil
 		}
 		dv := model.NewDefValBytes(bytes, raw)
 		return &dv
 	case *module.DefValEnum:
 		// Parser emits bare names as DefValEnum, but for model.OID-typed objects
 		// the name is actually an OID reference.
-		if isOIDType(ctx, mod, syntax) {
+		if base == model.BaseObjectIdentifier {
 			if node, ok := ctx.lookupNode(mod, v.Name); ok {
 				oid := node.OID()
 				dv := model.NewDefValOID(oid, v.Name)
 				return &dv
 			}
 			emitDefvalUnresolved(ctx, mod, span, fmt.Sprintf("DEFVAL OID reference %q could not be resolved", v.Name))
+			return nil
 		}
 		dv := model.NewDefValEnum(v.Name, v.Name)
 		return &dv
@@ -1143,6 +1172,12 @@ func convertDefVal(ctx *resolverContext, defval module.DefVal, mod *module.Modul
 		emitDefvalUnresolved(ctx, mod, span, fmt.Sprintf("DEFVAL OID reference %q could not be resolved", v.Name))
 		return nil
 	case *module.DefValOidValue:
+		for _, component := range v.Components {
+			if component.Invalid {
+				emitDefvalUnresolved(ctx, mod, span, "DEFVAL OID contains an invalid numeric component")
+				return nil
+			}
+		}
 		if len(v.Components) == 0 {
 			emitDefvalUnresolved(ctx, mod, span, "DEFVAL OID value has no components")
 			return nil
@@ -1175,12 +1210,33 @@ func convertDefVal(ctx *resolverContext, defval module.DefVal, mod *module.Modul
 			}
 			oid = append(oid, comp.Number)
 		}
-		dv := model.NewDefValOID(oid, first.Name)
+		dv := model.NewDefValOID(oid, formatOidComponents(v.Components))
 		return &dv
 	default:
 		emitDefvalUnresolved(ctx, mod, span, "DEFVAL could not be parsed")
 		return nil
 	}
+}
+
+// Format the written component expression rather than losing its tail or
+// qualification after resolution. Exact bytes remain in the owning source.
+func formatOidComponents(components []module.OidComponent) string {
+	parts := make([]string, len(components))
+	for i, component := range components {
+		name := component.Name
+		if component.Module != "" {
+			name = component.Module + "." + name
+		}
+		switch {
+		case name == "":
+			parts[i] = strconv.FormatUint(uint64(component.Number), 10)
+		case component.HasNumber:
+			parts[i] = fmt.Sprintf("%s(%d)", name, component.Number)
+		default:
+			parts[i] = name
+		}
+	}
+	return "{ " + strings.Join(parts, " ") + " }"
 }
 
 // hexToBytes converts a hex string (e.g., "00FF1A") to bytes.
@@ -1240,27 +1296,4 @@ func binaryToBytes(s string, rightPad bool) ([]byte, bool) {
 func isBareTypeIndex(name string) bool {
 	cls := wellKnownTypes[name]
 	return cls != 0 && cls != typeClassSNMPv2TC && name != "OBJECT IDENTIFIER"
-}
-
-// isOIDType checks if the syntax resolves to OBJECT IDENTIFIER.
-// For type references, it resolves the type and checks the effective base type,
-// which handles all model.OID-based textual conventions (AutonomousType, VariablePointer,
-// RowPointer, TDomain, etc.) without hardcoding names.
-func isOIDType(ctx *resolverContext, mod *module.Module, syntax module.TypeSyntax) bool {
-	switch s := syntax.(type) {
-	case *module.TypeSyntaxObjectIdentifier:
-		return true
-	case *module.TypeSyntaxTypeRef:
-		if s.Name == "OBJECT IDENTIFIER" {
-			return true
-		}
-		if t, ok := ctx.resolveTypeForModule(mod, s.Name); ok {
-			return t.EffectiveBase() == model.BaseObjectIdentifier
-		}
-		return false
-	case *module.TypeSyntaxConstrained:
-		return isOIDType(ctx, mod, s.Base)
-	default:
-		return false
-	}
 }

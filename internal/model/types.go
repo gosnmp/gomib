@@ -522,7 +522,8 @@ type ObjectVariation struct {
 	WriteSyntax      *SyntaxConstraints // WRITE-SYNTAX refinement (nil if not specified)
 	Access           *Access            // ACCESS restriction (nil if not specified)
 	CreationRequires []NameRef          // CREATION-REQUIRES columns (nil if not specified)
-	DefVal           DefVal             // overridden default value (zero if not specified)
+	DefVal           DefVal             // overridden default value (zero if absent or unresolved)
+	DefValSpan       Span               // source DEFVAL clause (empty if absent)
 	Description      string
 	Span             Span
 }

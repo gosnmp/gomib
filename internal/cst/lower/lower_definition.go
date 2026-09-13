@@ -218,7 +218,7 @@ func (l *lowerer) lowerTrapType(n *cst.TrapTypeNode) *module.Notification {
 		l.checkEmptyString(n.Reference.Value, name, "REFERENCE", types.DiagEmptyReference)
 	}
 
-	trapNumber := l.convertU32(n.Value)
+	trapNumber, validNumber := l.convertU32(n.Value)
 	span := types.NewSpan(n.Span.Start, n.Value.Span.End)
 
 	return &module.Notification{
@@ -229,8 +229,9 @@ func (l *lowerer) lowerTrapType(n *cst.TrapTypeNode) *module.Notification {
 		HasDescription: hasDescription,
 		Reference:      reference,
 		TrapInfo: &module.TrapInfo{
-			Enterprise: enterprise,
-			TrapNumber: trapNumber,
+			InvalidNumber: !validNumber,
+			Enterprise:    enterprise,
+			TrapNumber:    trapNumber,
 		},
 		// Oid is nil for TRAP-TYPE
 	}
