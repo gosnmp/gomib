@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"slices"
 
-	"github.com/golangsnmp/gomib/internal/model"
-	"github.com/golangsnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/model"
+	"github.com/gosnmp/gomib/internal/module"
 )
 
 // registerModules indexes all modules and seeds the resolver context.

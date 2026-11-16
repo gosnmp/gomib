@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/golangsnmp/gomib/cmd/internal/cliutil"
+	"github.com/gosnmp/gomib/cmd/internal/cliutil"
 )
 
 func (c *cli) cmdFixturegen(args []string) int {

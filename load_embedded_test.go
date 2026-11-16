@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golangsnmp/gomib"
+	"github.com/gosnmp/gomib"
 )
 
 func TestLoadWithEmbeddedBaseDeps(t *testing.T) {

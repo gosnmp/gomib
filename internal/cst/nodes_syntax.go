@@ -1,6 +1,6 @@
 package cst
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // TypeSyntaxNode is implemented by all CST type expression nodes.
 type TypeSyntaxNode interface {

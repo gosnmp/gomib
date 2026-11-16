@@ -64,7 +64,7 @@ formatters:
       extra-rules: true
     goimports:
       local-prefixes:
-        - github.com/golangsnmp/gomib
+        - github.com/gosnmp/gomib
 
 run:
   timeout: 5m

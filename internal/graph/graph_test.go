@@ -3,7 +3,7 @@ package graph
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 // dependencies returns the symbols that sym depends on (forward edges).

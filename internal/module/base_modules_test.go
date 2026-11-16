@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 func TestBaseModuleNames_DefensiveCopy(t *testing.T) {

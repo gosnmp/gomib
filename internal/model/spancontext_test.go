@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/internal/model"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/internal/model"
 )
 
 func TestSpanContext_Integration(t *testing.T) {

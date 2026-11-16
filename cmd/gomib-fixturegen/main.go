@@ -19,8 +19,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // NormalizedNode matches the fixture schema used by mib-rs tests.

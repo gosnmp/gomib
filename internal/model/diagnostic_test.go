@@ -3,7 +3,7 @@ package model
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 func TestDiagnosticConfigShouldReport(t *testing.T) {

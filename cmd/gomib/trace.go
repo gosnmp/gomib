@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 const traceUsage = `gomib trace - Trace symbol resolution for debugging

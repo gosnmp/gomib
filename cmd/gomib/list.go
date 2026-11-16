@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/golangsnmp/gomib"
+	"github.com/gosnmp/gomib"
 )
 
 const listUsage = `gomib list - List available module names

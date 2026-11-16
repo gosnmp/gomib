@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golangsnmp/gomib/internal/types"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // Export schema JSON types.

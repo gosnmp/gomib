@@ -4,7 +4,7 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 const loadUsage = `gomib load - Load and resolve MIB modules

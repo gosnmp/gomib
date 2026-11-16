@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // Option configures the emitter.

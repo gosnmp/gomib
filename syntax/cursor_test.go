@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golangsnmp/gomib/syntax"
+	"github.com/gosnmp/gomib/syntax"
 )
 
 var cursorTestMIB = []byte(`EXAMPLE-MIB DEFINITIONS ::= BEGIN

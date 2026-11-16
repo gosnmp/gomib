@@ -5,8 +5,8 @@ import (
 	"iter"
 	"slices"
 
-	"github.com/golangsnmp/gomib/internal/module"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // Module represents a loaded and resolved MIB module.

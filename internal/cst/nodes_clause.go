@@ -1,6 +1,6 @@
 package cst
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // SyntaxClauseNode is a SYNTAX clause containing a type expression.
 type SyntaxClauseNode struct {

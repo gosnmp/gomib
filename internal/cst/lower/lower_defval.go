@@ -3,10 +3,10 @@ package lower
 import (
 	"strconv"
 
-	"github.com/golangsnmp/gomib/internal/cst"
-	"github.com/golangsnmp/gomib/internal/lexer"
-	"github.com/golangsnmp/gomib/internal/module"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/cst"
+	"github.com/gosnmp/gomib/internal/lexer"
+	"github.com/gosnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // lowerDefVal converts opaque DefVal content tokens into the appropriate

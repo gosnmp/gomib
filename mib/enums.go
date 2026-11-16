@@ -1,6 +1,6 @@
 package mib
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // Severity indicates how serious a diagnostic issue is (libsmi-compatible).
 // Lower values are more severe.

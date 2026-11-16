@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 func TestBuildLineTable_Empty(t *testing.T) {

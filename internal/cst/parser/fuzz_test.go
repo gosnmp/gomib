@@ -3,11 +3,11 @@ package parser_test
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/cst"
-	"github.com/golangsnmp/gomib/internal/cst/lower"
-	cstparser "github.com/golangsnmp/gomib/internal/cst/parser"
-	"github.com/golangsnmp/gomib/internal/testutil"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/cst"
+	"github.com/gosnmp/gomib/internal/cst/lower"
+	cstparser "github.com/gosnmp/gomib/internal/cst/parser"
+	"github.com/gosnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 func FuzzCSTParseModule(f *testing.F) {

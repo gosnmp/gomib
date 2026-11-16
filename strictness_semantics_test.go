@@ -3,9 +3,9 @@ package gomib_test
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
-	"github.com/golangsnmp/gomib/internal/types"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // resolve_strictness_semantics_test.go covers semantic lookups layered on top

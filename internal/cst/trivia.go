@@ -1,8 +1,8 @@
 package cst
 
 import (
-	"github.com/golangsnmp/gomib/internal/lexer"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/lexer"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // TriviaKind classifies a trivia element (whitespace or comment).

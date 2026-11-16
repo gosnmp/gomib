@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 func signedRange(min, max int64) Range {

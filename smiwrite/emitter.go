@@ -6,7 +6,7 @@ import (
 	"io"
 	"slices"
 
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // emitter writes canonical SMIv2 text for a single module.

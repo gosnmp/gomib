@@ -1,6 +1,6 @@
 package model
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // Diagnostic represents an issue found during parsing or resolution.
 type Diagnostic = types.Diagnostic

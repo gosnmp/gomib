@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 type lexerState int

@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/cmd/internal/cliutil"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/cmd/internal/cliutil"
 )
 
 const usage = `gomib-libsmi - Compare gomib against libsmi (smilint)

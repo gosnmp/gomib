@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golangsnmp/gomib/internal/model"
-	"github.com/golangsnmp/gomib/internal/module"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/model"
+	"github.com/gosnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // resolveSemantics is the semantic analysis phase entry point.

@@ -3,7 +3,7 @@ package gomib
 import (
 	"io/fs"
 
-	"github.com/golangsnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/module"
 )
 
 // embeddedSource serves embedded base module SMI text as a Source.

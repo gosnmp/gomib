@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // normalizeType converts a gomib Type to the normalized string used in fixtures.

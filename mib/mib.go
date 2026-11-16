@@ -3,9 +3,9 @@ package mib
 import (
 	"log/slog"
 
-	"github.com/golangsnmp/gomib/internal/model"
-	"github.com/golangsnmp/gomib/internal/module"
-	"github.com/golangsnmp/gomib/internal/resolver"
+	"github.com/gosnmp/gomib/internal/model"
+	"github.com/gosnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/resolver"
 )
 
 // --- Core model types ---

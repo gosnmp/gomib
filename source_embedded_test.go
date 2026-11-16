@@ -6,7 +6,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/module"
 )
 
 func TestEmbeddedSource_Find(t *testing.T) {

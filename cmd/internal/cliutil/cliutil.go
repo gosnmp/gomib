@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	gomib "github.com/golangsnmp/gomib"
+	gomib "github.com/gosnmp/gomib"
 )
 
 // CGOFlags holds the common flags shared by CGO cross-validation tools.

@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golangsnmp/gomib/internal/cst"
-	"github.com/golangsnmp/gomib/internal/lexer"
-	"github.com/golangsnmp/gomib/internal/module"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/cst"
+	"github.com/gosnmp/gomib/internal/lexer"
+	"github.com/gosnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // lowerTypeSyntax converts a CST TypeSyntaxNode to module.TypeSyntax.

@@ -1,8 +1,8 @@
 package resolver
 
 import (
-	"github.com/golangsnmp/gomib/internal/model"
-	"github.com/golangsnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/model"
+	"github.com/gosnmp/gomib/internal/module"
 )
 
 // Lookup naming convention:

@@ -10,7 +10,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/golangsnmp/gomib/cmd/internal/cliutil"
+	"github.com/gosnmp/gomib/cmd/internal/cliutil"
 )
 
 func (c *cli) cmdTestgen(args []string) int {

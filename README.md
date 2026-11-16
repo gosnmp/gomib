@@ -1,8 +1,7 @@
 # gomib
 
-[![CI](https://github.com/golangsnmp/gomib/actions/workflows/ci.yml/badge.svg)](https://github.com/golangsnmp/gomib/actions/workflows/ci.yml)
-[![PkgGoDev](https://pkg.go.dev/badge/github.com/golangsnmp/gomib)](https://pkg.go.dev/github.com/golangsnmp/gomib)
-[![Go Report Card](https://goreportcard.com/badge/github.com/golangsnmp/gomib)](https://goreportcard.com/report/github.com/golangsnmp/gomib)
+[![CI](https://github.com/gosnmp/gomib/actions/workflows/ci.yml/badge.svg)](https://github.com/gosnmp/gomib/actions/workflows/ci.yml)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/gosnmp/gomib)](https://pkg.go.dev/github.com/gosnmp/gomib)
 
 Go library for parsing and querying SNMP MIB files.
 
@@ -11,10 +10,12 @@ Supports SMIv1 and SMIv2 modules. Loads MIBs from directories, directory trees, 
 ## Install
 
 ```
-go get github.com/golangsnmp/gomib
+go get github.com/gosnmp/gomib
 ```
 
 Requires Go 1.24+.
+
+gomib has moved from `github.com/golangsnmp/gomib` to [github.com/gosnmp/gomib](https://github.com/gosnmp/gomib). Update your Go module dependency and imports to `github.com/gosnmp/gomib`.
 
 ## Quick start
 
@@ -26,7 +27,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/golangsnmp/gomib"
+    "github.com/gosnmp/gomib"
 )
 
 func main() {
@@ -484,7 +485,7 @@ The `syntax` package provides direct access to the lexer, parser, and concrete s
 ### Tokenization
 
 ```go
-import "github.com/golangsnmp/gomib/syntax"
+import "github.com/gosnmp/gomib/syntax"
 
 source := []byte(`ifIndex OBJECT-TYPE SYNTAX InterfaceIndex`)
 tokens := syntax.Tokenize(source)

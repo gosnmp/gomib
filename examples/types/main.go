@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/golangsnmp/gomib"
+	"github.com/gosnmp/gomib"
 )
 
 func main() {

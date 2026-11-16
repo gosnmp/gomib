@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 const testCLIMIB = `TEST-MIB DEFINITIONS ::= BEGIN

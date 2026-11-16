@@ -5,9 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/cst"
-	"github.com/golangsnmp/gomib/internal/cst/parser"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/cst"
+	"github.com/gosnmp/gomib/internal/cst/parser"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 func TestFullCorpusRoundTrip(t *testing.T) {

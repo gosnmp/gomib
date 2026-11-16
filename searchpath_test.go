@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // sep is the OS path list separator as a string (":" on Unix, ";" on Windows).

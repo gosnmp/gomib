@@ -1,6 +1,6 @@
 package syntax
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // LineTable provides bidirectional conversion between byte offsets and
 // 1-based line/column numbers.

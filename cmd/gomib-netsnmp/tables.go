@@ -12,7 +12,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/golangsnmp/gomib/cmd/internal/cliutil"
+	"github.com/gosnmp/gomib/cmd/internal/cliutil"
 )
 
 // TableComparisonResult holds INDEX and AUGMENTS comparison results.

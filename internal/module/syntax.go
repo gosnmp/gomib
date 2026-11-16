@@ -1,7 +1,7 @@
 package module
 
 import (
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // NamedNumber is a named value in an INTEGER enumeration,

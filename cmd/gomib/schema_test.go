@@ -5,9 +5,9 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/internal/model"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/internal/model"
+	"github.com/gosnmp/gomib/mib"
 )
 
 func TestExportRangesPreservesEndpointSemantics(t *testing.T) {

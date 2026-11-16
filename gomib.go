@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/golangsnmp/gomib/internal/types"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // ErrNoSources is returned when Load is called with no sources.

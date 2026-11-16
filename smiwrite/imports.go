@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // importTracker collects symbols referenced by the emitted definitions

@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/golangsnmp/gomib/syntax"
+	"github.com/gosnmp/gomib/syntax"
 )
 
 func main() {
