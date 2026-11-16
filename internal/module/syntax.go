@@ -211,20 +211,20 @@ func NewRangeSingleUnsigned(value uint64, span types.Span) Range {
 	return Range{Min: &RangeValueUnsigned{Value: value}, Max: nil, Span: span}
 }
 
-// NewRangeSigned returns a Range from min to max with signed values.
-func NewRangeSigned(min, max int64, span types.Span) Range {
+// NewRangeSigned returns a Range from minRange to maxRange with signed values.
+func NewRangeSigned(minRange, maxRange int64, span types.Span) Range {
 	return Range{
-		Min:  &RangeValueSigned{Value: min},
-		Max:  &RangeValueSigned{Value: max},
+		Min:  &RangeValueSigned{Value: minRange},
+		Max:  &RangeValueSigned{Value: maxRange},
 		Span: span,
 	}
 }
 
-// NewRangeUnsigned returns a Range from min to max with unsigned values.
-func NewRangeUnsigned(min, max uint64, span types.Span) Range {
+// NewRangeUnsigned returns a Range from minRange to maxRange with unsigned values.
+func NewRangeUnsigned(minRange, maxRange uint64, span types.Span) Range {
 	return Range{
-		Min:  &RangeValueUnsigned{Value: min},
-		Max:  &RangeValueUnsigned{Value: max},
+		Min:  &RangeValueUnsigned{Value: minRange},
+		Max:  &RangeValueUnsigned{Value: maxRange},
 		Span: span,
 	}
 }

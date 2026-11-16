@@ -111,26 +111,26 @@ func (e *emitter) emitModuleCompliance(comp *mib.Compliance) error {
 }
 
 // emitAgentCapabilities writes an AGENT-CAPABILITIES definition.
-func (e *emitter) emitAgentCapabilities(cap *mib.Capability) error {
-	if _, err := fmt.Fprintf(e.w, "%s AGENT-CAPABILITIES\n", cap.Name()); err != nil {
+func (e *emitter) emitAgentCapabilities(c *mib.Capability) error {
+	if _, err := fmt.Fprintf(e.w, "%s AGENT-CAPABILITIES\n", c.Name()); err != nil {
 		return err
 	}
 
-	if pr := cap.ProductRelease(); pr != "" {
+	if pr := c.ProductRelease(); pr != "" {
 		if _, err := fmt.Fprintf(e.w, "    PRODUCT-RELEASE\n        %s\n", formatDescription(pr)); err != nil {
 			return err
 		}
 	}
 
-	if _, err := fmt.Fprintf(e.w, "    STATUS %s\n", formatStatus(cap.Status())); err != nil {
+	if _, err := fmt.Fprintf(e.w, "    STATUS %s\n", formatStatus(c.Status())); err != nil {
 		return err
 	}
 
-	if err := e.writeDescription(cap.Description()); err != nil {
+	if err := e.writeDescription(c.Description()); err != nil {
 		return err
 	}
 
-	for _, sm := range cap.Supports() {
+	for _, sm := range c.Supports() {
 		if _, err := fmt.Fprintf(e.w, "    SUPPORTS %s\n", sm.ModuleName); err != nil {
 			return err
 		}
@@ -186,7 +186,7 @@ func (e *emitter) emitAgentCapabilities(cap *mib.Capability) error {
 		}
 	}
 
-	nd := cap.Node()
+	nd := c.Node()
 	_, err := fmt.Fprintf(e.w, "    ::= %s\n", formatOIDAssignment(nd))
 	return err
 }

@@ -36,7 +36,7 @@ type (
 
 type (
 	// SyntaxToken is a meaningful token with attached leading and trailing trivia.
-	SyntaxToken = cst.SyntaxToken
+	SyntaxToken = cst.SyntaxToken //nolint:revive // TODO: Rename stuttering syntax.SyntaxToken.
 	// Trivia is a whitespace or comment fragment attached to a token.
 	Trivia = cst.Trivia
 	// TriviaKind classifies a trivia element (whitespace or comment).
@@ -102,7 +102,7 @@ type (
 
 type (
 	// SyntaxClauseNode is a SYNTAX clause.
-	SyntaxClauseNode = cst.SyntaxClauseNode
+	SyntaxClauseNode = cst.SyntaxClauseNode //nolint:revive // TODO: Rename stuttering syntax.SyntaxClauseNode.
 	// AccessClauseNode is a MAX-ACCESS or ACCESS clause.
 	AccessClauseNode = cst.AccessClauseNode
 	// StatusClauseNode is a STATUS clause.
@@ -329,7 +329,7 @@ const (
 	TokKwCounter32      = lexer.TokKwCounter32
 	TokKwCounter64      = lexer.TokKwCounter64
 	TokKwGauge32        = lexer.TokKwGauge32
-	TokKwIpAddress      = lexer.TokKwIpAddress
+	TokKwIPAddress      = lexer.TokKwIPAddress
 	TokKwOpaque         = lexer.TokKwOpaque
 	TokKwTimeTicks      = lexer.TokKwTimeTicks
 	TokKwBits           = lexer.TokKwBits

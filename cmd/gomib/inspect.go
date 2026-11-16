@@ -310,14 +310,14 @@ func (c *cli) inspectCompliance(m *mib.Mib, comp *mib.Compliance) {
 }
 
 // inspectCapability prints full detail for an AGENT-CAPABILITIES.
-func (c *cli) inspectCapability(m *mib.Mib, cap *mib.Capability) {
-	fmt.Fprintf(c.stdout, "Status:  %s\n", cap.Status().String())
+func (c *cli) inspectCapability(m *mib.Mib, mibCap *mib.Capability) {
+	fmt.Fprintf(c.stdout, "Status:  %s\n", mibCap.Status().String())
 
-	if cap.ProductRelease() != "" {
-		fmt.Fprintf(c.stdout, "Product: %s\n", cap.ProductRelease())
+	if mibCap.ProductRelease() != "" {
+		fmt.Fprintf(c.stdout, "Product: %s\n", mibCap.ProductRelease())
 	}
 
-	for _, sm := range cap.Supports() {
+	for _, sm := range mibCap.Supports() {
 		fmt.Fprintf(c.stdout, "\nSupports: %s\n", sm.ModuleName)
 		if len(sm.Includes) > 0 {
 			fmt.Fprintf(c.stdout, "  Includes: %s\n", strings.Join(mib.NameRefNames(sm.Includes), ", "))
@@ -344,10 +344,10 @@ func (c *cli) inspectCapability(m *mib.Mib, cap *mib.Capability) {
 	}
 
 	// Diagnostics.
-	c.printScopedDiagnostics(m, cap.Module(), cap.Span())
-	c.printRelatedUnresolved(m, cap.Name())
+	c.printScopedDiagnostics(m, mibCap.Module(), mibCap.Span())
+	c.printRelatedUnresolved(m, mibCap.Name())
 
-	c.printDescriptionReference(cap.Description(), cap.Reference())
+	c.printDescriptionReference(mibCap.Description(), mibCap.Reference())
 }
 
 // inspectBareNode prints detail for a node with no entity attachment.

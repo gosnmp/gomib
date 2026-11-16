@@ -29,7 +29,7 @@ func normalizeType(t *mib.Type) string {
 		return "Gauge32"
 	case mib.BaseTimeTicks:
 		return "TimeTicks"
-	case mib.BaseIpAddress:
+	case mib.BaseIPAddress:
 		return "IpAddress"
 	case mib.BaseOctetString:
 		return "OCTET STRING"

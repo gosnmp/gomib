@@ -52,7 +52,7 @@ package resolver
 //                                  DiagStatusInvalidCapabilities [E]
 //                                  DiagTypeStatusDeprecated     [W]
 //                                  DiagTypeStatusObsolete       [W]
-//   checkNotificationReversibility DiagNotifIdTooLarge          [W]  notification OID structure
+//   checkNotificationReversibility DiagNotifIDTooLarge          [W]  notification OID structure
 //                                  DiagNotifNotReversible       [W]
 //
 // Conformance (resolver_checks_conformance.go):
@@ -95,7 +95,7 @@ package resolver
 //   checkBasetypeImports           DiagBasetypeNotImported      [M]  missing basetype imports
 //   checkNodeImplicit              DiagNodeImplicit             [Y]  implicit OID nodes
 //   checkModuleIdentityRegistration DiagModuleIdentityReg       [W]  MODULE-IDENTITY OID checks
-//   checkIpAddressDeprecation      DiagIpAddressInSyntax        [Y]  deprecated IpAddress usage
+//   checkIPAddressDeprecation      DiagIPAddressInSyntax        [Y]  deprecated IpAddress usage
 
 import (
 	"fmt"
@@ -125,7 +125,7 @@ func checkNodeParentKinds(ctx *resolverContext, objRefs []objectTypeRef) {
 			continue
 		}
 		parentKind := node.Parent().Kind()
-		switch node.Kind() {
+		switch node.Kind() { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 		case model.KindTable:
 			if !isSimpleParentKind(parentKind) {
 				ctx.EmitDiagnostic(types.DiagParentTable,
@@ -362,8 +362,8 @@ func checkRangeList(ctx *resolverContext, ranges []model.Range, base model.BaseT
 	for i := range ranges {
 		r := &ranges[i]
 		// Exchanged limits (min > max).
-		comparison, comparable := r.Min.Compare(r.Max)
-		if comparable && comparison > 0 {
+		comparison, ok := r.Min.Compare(r.Max)
+		if ok && comparison > 0 {
 			ctx.EmitDiagnostic(types.DiagRangeExchanged,
 				mod, span,
 				fmt.Sprintf("%q: range %s has exchanged limits", name, r.String()))
@@ -418,7 +418,7 @@ func isNumericBase(base model.BaseType) bool {
 func isLegalIndexBasetype(base model.BaseType) bool {
 	switch base {
 	case model.BaseInteger32, model.BaseUnsigned32, model.BaseGauge32, model.BaseTimeTicks,
-		model.BaseIpAddress, model.BaseOctetString, model.BaseOpaque, model.BaseBits, model.BaseObjectIdentifier:
+		model.BaseIPAddress, model.BaseOctetString, model.BaseOpaque, model.BaseBits, model.BaseObjectIdentifier:
 		return true
 	default:
 		return false
@@ -437,16 +437,16 @@ func maxSizeFromRanges(sizes []model.Range) int64 {
 	return m
 }
 
-// indexElementSubIds returns the maximum number of sub-identifiers an index
+// indexElementSubIDs returns the maximum number of sub-identifiers an index
 // element contributes to an instance model.OID. Returns (count, true) if computable,
 // or (0, false) if the encoding or type constraints are insufficient.
-func indexElementSubIds(entry model.IndexEntry) (int, bool) {
+func indexElementSubIDs(entry model.IndexEntry) (int, bool) {
 	obj := entry.Object
 	if obj == nil {
 		return 0, false
 	}
 	switch entry.Encoding {
-	case model.IndexEncodingInteger, model.IndexEncodingIpAddress, model.IndexEncodingFixedString:
+	case model.IndexEncodingInteger, model.IndexEncodingIPAddress, model.IndexEncodingFixedString:
 		return entry.FixedSize()
 	case model.IndexEncodingLengthPrefixed:
 		t := obj.Type()
@@ -617,7 +617,7 @@ func checkIndexOIDLength(ctx *resolverContext, ref objectTypeRef) {
 
 	totalLen := len(rowOID)
 	for _, entry := range resolvedObj.Index() {
-		n, ok := indexElementSubIds(entry)
+		n, ok := indexElementSubIDs(entry)
 		if !ok {
 			return // can't compute, skip the check
 		}
@@ -704,7 +704,7 @@ func checkDefvalConstraints(ctx *resolverContext, objRefs []objectTypeRef) {
 // isUnsigned=true and ival=0.
 func checkDefvalNumeric(ctx *resolverContext, mod *module.Module, obj *module.ObjectType, ival int64, uval uint64, isUnsigned bool, base model.BaseType, ranges []model.Range, rangesConstrained bool, enums []model.NamedValue) {
 	// Check basetype limits.
-	switch base {
+	switch base { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 	case model.BaseInteger32:
 		if isUnsigned {
 			if uval > math.MaxInt32 {
@@ -1099,7 +1099,7 @@ func checkAccessKeywordPerVersion(ctx *resolverContext, mod *module.Module, obj 
 // checkKindAccess validates access values for specific node kinds:
 // tables and rows must be not-accessible, scalars must not be read-create.
 func checkKindAccess(ctx *resolverContext, mod *module.Module, obj *module.ObjectType, node *model.Node) {
-	switch node.Kind() {
+	switch node.Kind() { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 	case model.KindTable:
 		if obj.Access != types.AccessNotAccessible {
 			ctx.EmitDiagnostic(types.DiagAccessTableIllegal,
@@ -1240,7 +1240,7 @@ func checkTypeStatusUsage(ctx *resolverContext, objRefs []objectTypeRef) {
 		if t == nil {
 			continue
 		}
-		switch t.Status() {
+		switch t.Status() { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 		case model.StatusDeprecated:
 			ctx.EmitDiagnostic(types.DiagTypeStatusDeprecated,
 				ref.mod, ref.obj.Span,
@@ -1271,7 +1271,7 @@ func checkNotificationReversibility(ctx *resolverContext) {
 
 		// Check last sub-id fits in int32 (for SNMPv1 specific-trap field).
 		if node.Arc() > math.MaxInt32 {
-			ctx.EmitDiagnostic(types.DiagNotifIdTooLarge,
+			ctx.EmitDiagnostic(types.DiagNotifIDTooLarge,
 				ref.mod, ref.notif.Span,
 				fmt.Sprintf("last sub-identifier of notification %q is too large", ref.notif.Name))
 		}

@@ -201,13 +201,13 @@ func TestCapabilityVariationGlobalLookupStrictnessBoundaries(t *testing.T) {
 		t.Run(lvl.name, func(t *testing.T) {
 			m := loadAtStrictness(t, "PROBLEM-SEMANTIC-GLOBAL-MIB", lvl.level)
 
-			cap := m.Capability("problemGlobalCapability")
-			testutil.NotNil(t, cap, "capability should resolve")
-			if cap == nil {
+			capability := m.Capability("problemGlobalCapability")
+			testutil.NotNil(t, capability, "capability should resolve")
+			if capability == nil {
 				return
 			}
 
-			supports := cap.Supports()
+			supports := capability.Supports()
 			testutil.Len(t, supports, 1, "capability SUPPORTS clauses")
 			if len(supports) != 1 {
 				return

@@ -134,7 +134,7 @@ func TestResolveBaseModuleSMITypes(t *testing.T) {
 		{"Gauge32", model.BaseGauge32},
 		{"Unsigned32", model.BaseUnsigned32},
 		{"TimeTicks", model.BaseTimeTicks},
-		{"IpAddress", model.BaseIpAddress},
+		{"IpAddress", model.BaseIPAddress},
 		{"Opaque", model.BaseOpaque},
 	}
 

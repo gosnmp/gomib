@@ -71,7 +71,7 @@ type IndexItem struct {
 }
 
 // ModuleIdentity is a MODULE-IDENTITY definition.
-type ModuleIdentity struct {
+type ModuleIdentity struct { //nolint:revive // TODO: Rename stuttering module.ModuleIdentity.
 	DefBase
 	LastUpdated  string
 	Organization string
@@ -182,7 +182,7 @@ type NotificationGroup struct {
 func (d *NotificationGroup) DefinitionOid() *OidAssignment { return &d.Oid }
 
 // ModuleCompliance is a MODULE-COMPLIANCE definition.
-type ModuleCompliance struct {
+type ModuleCompliance struct { //nolint:revive // TODO: Rename stuttering module.ModuleCompliance.
 	DefBase
 	Status      types.Status
 	Description string

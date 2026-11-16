@@ -27,7 +27,7 @@ func TestSyntaxToBaseType(t *testing.T) {
 		{"typeref Gauge32", &module.TypeSyntaxTypeRef{Name: "Gauge32"}, model.BaseGauge32, true},
 		{"typeref Unsigned32", &module.TypeSyntaxTypeRef{Name: "Unsigned32"}, model.BaseUnsigned32, true},
 		{"typeref TimeTicks", &module.TypeSyntaxTypeRef{Name: "TimeTicks"}, model.BaseTimeTicks, true},
-		{"typeref IpAddress", &module.TypeSyntaxTypeRef{Name: "IpAddress"}, model.BaseIpAddress, true},
+		{"typeref IpAddress", &module.TypeSyntaxTypeRef{Name: "IpAddress"}, model.BaseIPAddress, true},
 		{"typeref Opaque", &module.TypeSyntaxTypeRef{Name: "Opaque"}, model.BaseOpaque, true},
 		{"typeref OCTET STRING", &module.TypeSyntaxTypeRef{Name: "OCTET STRING"}, model.BaseOctetString, true},
 		{"typeref OBJECT IDENTIFIER", &module.TypeSyntaxTypeRef{Name: "OBJECT IDENTIFIER"}, model.BaseObjectIdentifier, true},
@@ -171,7 +171,7 @@ func TestIsApplicationBaseType(t *testing.T) {
 		{"Gauge32", model.BaseGauge32, true},
 		{"Unsigned32", model.BaseUnsigned32, true},
 		{"TimeTicks", model.BaseTimeTicks, true},
-		{"IpAddress", model.BaseIpAddress, true},
+		{"IpAddress", model.BaseIPAddress, true},
 		{"Opaque", model.BaseOpaque, true},
 		{"Integer32", model.BaseInteger32, false},
 		{"OctetString", model.BaseOctetString, false},
@@ -436,8 +436,8 @@ func TestRangeValueToConstraintPreservesKind(t *testing.T) {
 }
 
 func TestEffectiveRangeSemantics(t *testing.T) {
-	min := model.RangeBound{Kind: model.RangeBoundMin}
-	max := model.RangeBound{Kind: model.RangeBoundMax}
+	minRange := model.RangeBound{Kind: model.RangeBoundMin}
+	maxRange := model.RangeBound{Kind: model.RangeBoundMax}
 	span := types.Span{}
 	parent := model.NewType("Parent")
 	model.SetTypeBase(parent, model.BaseInteger32)
@@ -447,11 +447,11 @@ func TestEffectiveRangeSemantics(t *testing.T) {
 	child := model.NewType("Child")
 	model.SetTypeBase(child, model.BaseInteger32)
 	model.SetTypeParent(child, parent)
-	model.SetTypeRanges(child, []model.Range{{Min: min, Max: max, Span: span}})
+	model.SetTypeRanges(child, []model.Range{{Min: minRange, Max: maxRange, Span: span}})
 
 	direct := child.Ranges()
-	testutil.Equal(t, min, direct[0].Min, "direct MIN")
-	testutil.Equal(t, max, direct[0].Max, "direct MAX")
+	testutil.Equal(t, minRange, direct[0].Min, "direct MIN")
+	testutil.Equal(t, maxRange, direct[0].Max, "direct MAX")
 	effective := child.EffectiveRanges()
 	testutil.Len(t, effective, 1, "effective intersection")
 	testutil.Equal(t, model.NewSignedRangeBound(-10), effective[0].Min, "effective min")
@@ -484,7 +484,7 @@ func TestEffectiveRangeSemantics(t *testing.T) {
 	maxOnly := model.NewType("MaxOnly")
 	model.SetTypeBase(maxOnly, model.BaseInteger32)
 	model.SetTypeParent(maxOnly, multi)
-	model.SetTypeRanges(maxOnly, []model.Range{{Min: max, Max: max, Span: span}})
+	model.SetTypeRanges(maxOnly, []model.Range{{Min: maxRange, Max: maxRange, Span: span}})
 	effective = maxOnly.EffectiveRanges()
 	testutil.Len(t, effective, 1, "MAX is not a false exact sentinel match")
 	testutil.Equal(t, model.NewSignedRangeBound(30), effective[0].Min, "MAX resolves to parent maximum")
@@ -521,7 +521,7 @@ func TestResolveBaseFromChain(t *testing.T) {
 	t.Run("stops at each application type", func(t *testing.T) {
 		appTypes := []model.BaseType{
 			model.BaseCounter32, model.BaseCounter64, model.BaseGauge32,
-			model.BaseUnsigned32, model.BaseTimeTicks, model.BaseIpAddress, model.BaseOpaque,
+			model.BaseUnsigned32, model.BaseTimeTicks, model.BaseIPAddress, model.BaseOpaque,
 		}
 		for _, appBase := range appTypes {
 			root := model.NewType("root")

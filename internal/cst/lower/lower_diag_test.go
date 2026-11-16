@@ -336,8 +336,8 @@ func TestHexRangeLiteralLowering(t *testing.T) {
 		t.Fatalf("got %d whitespace ranges, want 4", len(valid))
 	}
 	for index, r := range valid {
-		min, ok := r.Min.(*module.RangeValueUnsigned)
-		if !ok || min.Value != 0x7fff {
+		minRange, ok := r.Min.(*module.RangeValueUnsigned)
+		if !ok || minRange.Value != 0x7fff {
 			t.Errorf("whitespace range %d endpoint = %#v, want 32767", index, r.Min)
 		}
 	}

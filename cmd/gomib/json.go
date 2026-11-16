@@ -132,7 +132,7 @@ func buildObjectJSON(obj *mib.Object, opts JSONOptions) ObjectJSON {
 		o.Augments = obj.Augments().Name()
 	}
 
-	switch obj.Kind() {
+	switch obj.Kind() { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 	case mib.KindTable:
 		if entry := obj.Entry(); entry != nil {
 			o.Entry = entry.Name()

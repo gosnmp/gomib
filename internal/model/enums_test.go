@@ -207,7 +207,7 @@ func TestBaseTypeString(t *testing.T) {
 		{BaseCounter64, "Counter64"},
 		{BaseGauge32, "Gauge32"},
 		{BaseTimeTicks, "TimeTicks"},
-		{BaseIpAddress, "IpAddress"},
+		{BaseIPAddress, "IpAddress"},
 		{BaseOctetString, "OCTET STRING"},
 		{BaseObjectIdentifier, "OBJECT IDENTIFIER"},
 		{BaseBits, "BITS"},

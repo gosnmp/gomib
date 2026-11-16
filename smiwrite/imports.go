@@ -271,7 +271,7 @@ func collectTypeSyntaxImports(it *importTracker, t *mib.Type) {
 
 // collectBaseTypeImport imports base SMI types that aren't built-in keywords.
 func collectBaseTypeImport(it *importTracker, base mib.BaseType) {
-	switch base {
+	switch base { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 	case mib.BaseInteger32:
 		it.addSymbol("SNMPv2-SMI", "Integer32")
 	case mib.BaseUnsigned32:
@@ -284,7 +284,7 @@ func collectBaseTypeImport(it *importTracker, base mib.BaseType) {
 		it.addSymbol("SNMPv2-SMI", "Gauge32")
 	case mib.BaseTimeTicks:
 		it.addSymbol("SNMPv2-SMI", "TimeTicks")
-	case mib.BaseIpAddress:
+	case mib.BaseIPAddress:
 		it.addSymbol("SNMPv2-SMI", "IpAddress")
 	case mib.BaseOpaque:
 		it.addSymbol("SNMPv2-SMI", "Opaque")

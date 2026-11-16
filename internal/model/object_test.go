@@ -236,7 +236,7 @@ func TestClassifyIndexEncoding(t *testing.T) {
 		{"Gauge32", makeObj(BaseGauge32, nil), false, IndexEncodingInteger},
 		{"TimeTicks", makeObj(BaseTimeTicks, nil), false, IndexEncodingInteger},
 		{"Counter32", makeObj(BaseCounter32, nil), false, IndexEncodingInteger},
-		{"IpAddress", makeObj(BaseIpAddress, nil), false, IndexEncodingIpAddress},
+		{"IpAddress", makeObj(BaseIPAddress, nil), false, IndexEncodingIPAddress},
 		{"fixed size OCTET STRING", makeObj(BaseOctetString, []Range{{Min: NewSignedRangeBound(6), Max: NewSignedRangeBound(6)}}), false, IndexEncodingFixedString},
 		{"variable OCTET STRING", makeObj(BaseOctetString, nil), false, IndexEncodingLengthPrefixed},
 		{"variable OCTET STRING with size range", makeObj(BaseOctetString, []Range{{Min: NewSignedRangeBound(0), Max: NewSignedRangeBound(255)}}), false, IndexEncodingLengthPrefixed},
@@ -271,7 +271,7 @@ func TestIndexEntryFixedSize(t *testing.T) {
 		wantOK bool
 	}{
 		{"integer", IndexEntry{Object: makeObj(BaseInteger32, nil), Encoding: IndexEncodingInteger}, 1, true},
-		{"ip address", IndexEntry{Object: makeObj(BaseIpAddress, nil), Encoding: IndexEncodingIpAddress}, 4, true},
+		{"ip address", IndexEntry{Object: makeObj(BaseIPAddress, nil), Encoding: IndexEncodingIPAddress}, 4, true},
 		{"fixed string SIZE 6", IndexEntry{Object: makeObj(BaseOctetString, []Range{{Min: NewSignedRangeBound(6), Max: NewSignedRangeBound(6)}}), Encoding: IndexEncodingFixedString}, 6, true},
 		{"length prefixed", IndexEntry{Object: makeObj(BaseOctetString, nil), Encoding: IndexEncodingLengthPrefixed}, 0, false},
 		{"implied", IndexEntry{Object: makeObj(BaseOctetString, nil), Encoding: IndexEncodingImplied}, 0, false},

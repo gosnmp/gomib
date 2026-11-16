@@ -56,7 +56,7 @@ func resolveSemantics(ctx *resolverContext) {
 	checkTAddressTDomain(ctx, objRefs)
 	checkIncludesGroups(ctx)
 	checkCreationRequires(ctx)
-	checkIpAddressDeprecation(ctx, objRefs)
+	checkIPAddressDeprecation(ctx, objRefs)
 	checkInetAddressPairing(ctx, objRefs)
 	checkTransportAddressPairing(ctx, objRefs)
 }

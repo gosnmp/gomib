@@ -25,15 +25,15 @@ func TestDecodeSuffixInteger(t *testing.T) {
 	testutil.Equal(t, uint32(42), n, "value")
 }
 
-func TestDecodeSuffixIpAddress(t *testing.T) {
+func TestDecodeSuffixIPAddress(t *testing.T) {
 	m := loadIndexDecodeMIB(t)
 	row := requireObject(t, m, "ipEntry")
 	decoded := mib.DecodeSuffix(row.EffectiveIndexes(), mib.OID{10, 0, 1, 99})
 
 	testutil.Equal(t, 1, len(decoded), "decoded count")
 	testutil.Equal(t, "ipAddr", decoded[0].Name(), "name")
-	ip, ok := decoded[0].Value().IpAddress()
-	testutil.True(t, ok, "IpAddress() ok")
+	ip, ok := decoded[0].Value().IPAddress()
+	testutil.True(t, ok, "IPAddress() ok")
 	testutil.Equal(t, [4]byte{10, 0, 1, 99}, ip, "value")
 	testutil.Equal(t, "10.0.1.99", decoded[0].Value().String(), "string")
 }
@@ -90,7 +90,7 @@ func TestDecodeSuffixMultiIndex(t *testing.T) {
 	n, _ := decoded[0].Value().Integer()
 	testutil.Equal(t, uint32(3), n, "value[0]")
 	testutil.Equal(t, "multiAddr", decoded[1].Name(), "name[1]")
-	ip, _ := decoded[1].Value().IpAddress()
+	ip, _ := decoded[1].Value().IPAddress()
 	testutil.Equal(t, [4]byte{192, 168, 1, 1}, ip, "value[1]")
 }
 
@@ -138,7 +138,7 @@ func TestDecodeSuffixImpliedOID(t *testing.T) {
 func TestDecodeSuffixInsufficientArcs(t *testing.T) {
 	m := loadIndexDecodeMIB(t)
 	row := requireObject(t, m, "ipEntry")
-	// IpAddress needs 4 arcs, only 2 provided
+	// IPAddress needs 4 arcs, only 2 provided
 	decoded := mib.DecodeSuffix(row.EffectiveIndexes(), mib.OID{10, 0})
 	testutil.Equal(t, 0, len(decoded), "should be empty")
 }

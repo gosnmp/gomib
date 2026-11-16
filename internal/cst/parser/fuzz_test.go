@@ -115,7 +115,7 @@ func FuzzCSTConstraintParsing(f *testing.F) {
 	testutil.AddProblemCorpusSeeds(f)
 	testutil.AddPrimaryCorpusSeeds(f)
 
-	f.Fuzz(func(t *testing.T, data []byte) {
+	f.Fuzz(func(_ *testing.T, data []byte) {
 		if len(data) > 1<<16 {
 			return
 		}

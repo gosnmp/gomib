@@ -74,14 +74,14 @@ func main() {
 	}
 	fmt.Println()
 
-	cap := m.Capability("exAgentCaps")
-	if cap == nil {
+	exAgentCaps := m.Capability("exAgentCaps")
+	if exAgentCaps == nil {
 		log.Fatal("exAgentCaps not found")
 	}
-	fmt.Printf("Capability: %s\n", cap.Name())
-	fmt.Printf("  OID:              %s\n", cap.OID())
-	fmt.Printf("  Product release:  %s\n", cap.ProductRelease())
-	for _, sup := range cap.Supports() {
+	fmt.Printf("Capability: %s\n", exAgentCaps.Name())
+	fmt.Printf("  OID:              %s\n", exAgentCaps.OID())
+	fmt.Printf("  Product release:  %s\n", exAgentCaps.ProductRelease())
+	for _, sup := range exAgentCaps.Supports() {
 		fmt.Printf("  SUPPORTS %s\n", sup.ModuleName)
 		fmt.Printf("    includes: %s\n", strings.Join(mib.NameRefNames(sup.Includes), ", "))
 		for i := range sup.ObjectVariations {

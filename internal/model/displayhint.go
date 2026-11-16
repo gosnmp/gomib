@@ -93,7 +93,7 @@ type OctetStringHint struct {
 // MacAddress's "1x:").
 func (h *OctetStringHint) IsText() bool {
 	for i := range h.Segments {
-		if h.Segments[i].Format != OctetAscii && h.Segments[i].Format != OctetUtf8 {
+		if h.Segments[i].Format != OctetASCII && h.Segments[i].Format != OctetUtf8 {
 			return false
 		}
 	}
@@ -116,7 +116,7 @@ const (
 	OctetDecimal OctetFormat = iota
 	OctetHex
 	OctetOctal
-	OctetAscii
+	OctetASCII
 	OctetUtf8
 )
 
@@ -129,7 +129,7 @@ func (f OctetFormat) String() string {
 		return "x"
 	case OctetOctal:
 		return "o"
-	case OctetAscii:
+	case OctetASCII:
 		return "a"
 	case OctetUtf8:
 		return "t"
@@ -237,7 +237,7 @@ func parseOctetStringHint(hint string) *OctetStringHint {
 		case 'o':
 			seg.Format = OctetOctal
 		case 'a':
-			seg.Format = OctetAscii
+			seg.Format = OctetASCII
 		case 't':
 			seg.Format = OctetUtf8
 		default:

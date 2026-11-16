@@ -32,7 +32,7 @@ var keywords = map[string]TokenKind{
 	"INDEX":              TokKwIndex,
 	"INTEGER":            TokKwInteger,
 	"Integer":            TokKwInteger,
-	"IpAddress":          TokKwIpAddress,
+	"IpAddress":          TokKwIPAddress,
 	"LAST-UPDATED":       TokKwLastUpdated,
 	"MACRO":              TokKwMacro,
 	"MANDATORY-GROUPS":   TokKwMandatoryGroups,

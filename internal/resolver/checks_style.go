@@ -136,7 +136,7 @@ func checkTableRowNaming(ctx *resolverContext, objRefs []objectTypeRef) {
 		if !ok {
 			continue
 		}
-		switch node.Kind() {
+		switch node.Kind() { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 		case model.KindTable:
 			if !strings.HasSuffix(ref.obj.Name, "Table") {
 				ctx.EmitDiagnostic(types.DiagTableNameTable,
@@ -320,7 +320,7 @@ func checkFormatHints(ctx *resolverContext) {
 							td.Name, td.DisplayHint, base))
 				}
 			} else if resolved.EffectiveDisplayHint() == "" {
-				switch base {
+				switch base { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 				case model.BaseOctetString, model.BaseInteger32, model.BaseUnsigned32, model.BaseGauge32:
 					ctx.EmitDiagnostic(types.DiagTypeWithoutFormat,
 						mod, td.Span,
@@ -648,9 +648,9 @@ func checkModuleIdentityRegistration(ctx *resolverContext) {
 	}
 }
 
-// checkIpAddressDeprecation warns when SMIv2 OBJECT-TYPEs use IpAddress,
+// checkIPAddressDeprecation warns when SMIv2 OBJECT-TYPEs use IpAddress,
 // which is deprecated in favor of InetAddress (RFC 4001).
-func checkIpAddressDeprecation(ctx *resolverContext, objRefs []objectTypeRef) {
+func checkIPAddressDeprecation(ctx *resolverContext, objRefs []objectTypeRef) {
 	for _, ref := range objRefs {
 		if ref.mod.Language != types.LanguageSMIv2 || module.IsBaseModule(ref.mod.Name) {
 			continue
@@ -663,8 +663,8 @@ func checkIpAddressDeprecation(ctx *resolverContext, objRefs []objectTypeRef) {
 		if t == nil {
 			continue
 		}
-		if t.EffectiveBase() == model.BaseIpAddress {
-			ctx.EmitDiagnostic(types.DiagIpAddressInSyntax,
+		if t.EffectiveBase() == model.BaseIPAddress {
+			ctx.EmitDiagnostic(types.DiagIPAddressInSyntax,
 				ref.mod, ref.obj.Spans.Syntax,
 				fmt.Sprintf("%q: IpAddress is deprecated, use InetAddress (RFC 4001)", ref.obj.Name))
 		}

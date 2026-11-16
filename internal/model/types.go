@@ -182,11 +182,12 @@ func (r *Range) IsResolved() bool { return r.Min.IsConcrete() && r.Max.IsConcret
 
 // String returns the range as "min..max" or just "value" for equal endpoints.
 func (r Range) String() string {
-	min, max := r.Min.String(), r.Max.String()
-	if min == max {
-		return min
+	minString := r.Min.String()
+	maxString := r.Max.String()
+	if minString == maxString {
+		return minString
 	}
-	return min + ".." + max
+	return minString + ".." + maxString
 }
 
 // NamedValue represents a labeled integer from an enum or BITS definition.
@@ -239,8 +240,8 @@ func classifyIndexEncoding(obj *Object, implied bool) IndexEncoding {
 	case BaseInteger32, BaseUnsigned32, BaseGauge32, BaseTimeTicks,
 		BaseCounter32, BaseCounter64:
 		return IndexEncodingInteger
-	case BaseIpAddress:
-		return IndexEncodingIpAddress
+	case BaseIPAddress:
+		return IndexEncodingIPAddress
 	case BaseOctetString, BaseOpaque, BaseBits:
 		if implied {
 			return IndexEncodingImplied
@@ -267,7 +268,7 @@ func (e IndexEntry) FixedSize() (int, bool) {
 	switch e.Encoding {
 	case IndexEncodingInteger:
 		return 1, true
-	case IndexEncodingIpAddress:
+	case IndexEncodingIPAddress:
 		return 4, true
 	case IndexEncodingFixedString:
 		if e.Object != nil && isFixedSize(e.Object.sizes) {
@@ -286,9 +287,9 @@ func isFixedSize(sizes []Range) bool {
 	if len(sizes) != 1 {
 		return false
 	}
-	comparison, comparable := sizes[0].Min.Compare(sizes[0].Max)
+	comparison, ok := sizes[0].Min.Compare(sizes[0].Max)
 	value, unsigned := sizes[0].Min.AsUint64()
-	return comparable && comparison == 0 && unsigned && value > 0
+	return ok && comparison == 0 && unsigned && value > 0
 }
 
 // DefValKind identifies the type of default value.

@@ -94,7 +94,7 @@ const (
 	DiagNotifObjectNotObject         = "notification-object-not-object"
 	DiagNotifObjectAccess            = "notification-object-access"
 	DiagNotifNotReversible           = "notification-not-reversible"
-	DiagNotifIdTooLarge              = "notification-id-too-large"
+	DiagNotifIDTooLarge              = "notification-id-too-large"
 	DiagMalformedHexDefval           = "malformed-hex-defval"
 	DiagMalformedBinDefval           = "malformed-bin-defval"
 	DiagDefvalUnresolved             = "defval-unresolved"
@@ -200,7 +200,7 @@ const (
 	DiagIndexNotAccessible           = "index-not-accessible"
 	DiagIndexDefval                  = "index-defval"
 	DiagAccessWriteOnlySMIv1         = "access-write-only-smiv1"
-	DiagIpAddressInSyntax            = "ipaddress-in-syntax"
+	DiagIPAddressInSyntax            = "ipaddress-in-syntax"
 	DiagInetAddressPairing           = "inetaddress-inetaddresstype"
 	DiagInetAddressTypeSubtyped      = "inetaddresstype-subtyped"
 	DiagInetAddressSpecific          = "inetaddress-specific"
@@ -305,7 +305,7 @@ var resolverDiagCodes = []codeEntry{
 	{DiagNotifObjectNotObject, SeverityMinor},
 	{DiagNotifObjectAccess, SeverityMinor},
 	{DiagNotifNotReversible, SeverityWarning},
-	{DiagNotifIdTooLarge, SeverityWarning},
+	{DiagNotifIDTooLarge, SeverityWarning},
 	{DiagMalformedHexDefval, SeverityWarning},
 	{DiagMalformedBinDefval, SeverityWarning},
 	{DiagDefvalUnresolved, SeverityWarning},
@@ -411,7 +411,7 @@ var resolverDiagCodes = []codeEntry{
 	{DiagIndexNotAccessible, SeverityMinor},
 	{DiagIndexDefval, SeverityWarning},
 	{DiagAccessWriteOnlySMIv1, SeverityStyle},
-	{DiagIpAddressInSyntax, SeverityStyle},
+	{DiagIPAddressInSyntax, SeverityStyle},
 	{DiagInetAddressPairing, SeverityWarning},
 	{DiagInetAddressTypeSubtyped, SeverityWarning},
 	{DiagInetAddressSpecific, SeverityStyle},

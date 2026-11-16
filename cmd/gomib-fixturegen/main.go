@@ -396,13 +396,13 @@ func extractNodes(m *mib.Mib) map[string]*NormalizedNode {
 			}
 		}
 
-		if cap := node.Capability(); cap != nil {
-			n.Status = cap.Status().String()
-			n.Description = cap.Description()
-			n.Reference = cap.Reference()
+		if nodeCap := node.Capability(); nodeCap != nil {
+			n.Status = nodeCap.Status().String()
+			n.Description = nodeCap.Description()
+			n.Reference = nodeCap.Reference()
 			n.NodeType = "AGENT-CAPABILITIES"
-			n.ProductRelease = cap.ProductRelease()
-			for _, sm := range cap.Supports() {
+			n.ProductRelease = nodeCap.ProductRelease()
+			for _, sm := range nodeCap.Supports() {
 				n.CapabilitySupports = append(n.CapabilitySupports, normalizeCapabilityModule(&sm))
 			}
 		}
@@ -545,7 +545,7 @@ func baseTypeSyntax(b mib.BaseType) string {
 		return "Gauge32"
 	case mib.BaseTimeTicks:
 		return "TimeTicks"
-	case mib.BaseIpAddress:
+	case mib.BaseIPAddress:
 		return "IpAddress"
 	case mib.BaseOctetString:
 		return "OCTET STRING"

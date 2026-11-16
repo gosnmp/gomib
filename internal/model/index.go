@@ -13,7 +13,7 @@ type IndexValueKind int
 
 const (
 	IndexValueInteger          IndexValueKind = iota + 1 // single-arc integer
-	IndexValueIpAddress                                  // four-arc IPv4 address
+	IndexValueIPAddress                                  // four-arc IPv4 address
 	IndexValueOctetString                                // octet string (fixed, length-prefixed, or implied)
 	IndexValueObjectIdentifier                           // sub-OID (length-prefixed or implied)
 )
@@ -23,7 +23,7 @@ func (k IndexValueKind) String() string {
 	switch k {
 	case IndexValueInteger:
 		return "integer"
-	case IndexValueIpAddress:
+	case IndexValueIPAddress:
 		return "ip-address"
 	case IndexValueOctetString:
 		return "octet-string"
@@ -40,7 +40,7 @@ func (k IndexValueKind) String() string {
 // base type, following RFC 2578 section 7.7:
 //
 //   - Integer types produce [IndexValueInteger] (one arc).
-//   - IpAddress produces [IndexValueIpAddress] (four arcs).
+//   - IPAddress produces [IndexValueIPAddress] (four arcs).
 //   - OCTET STRING / Opaque / BITS produce [IndexValueOctetString],
 //     either fixed-length, length-prefixed, or implied.
 //   - OBJECT IDENTIFIER produces [IndexValueObjectIdentifier],
@@ -62,10 +62,10 @@ func (v IndexValue) Integer() (uint32, bool) {
 	return 0, false
 }
 
-// IpAddress returns the four-octet IPv4 address and true if this is an
+// IPAddress returns the four-octet IPv4 address and true if this is an
 // IP address index, or (zero, false) otherwise.
-func (v IndexValue) IpAddress() ([4]byte, bool) {
-	if v.kind == IndexValueIpAddress {
+func (v IndexValue) IPAddress() ([4]byte, bool) {
+	if v.kind == IndexValueIPAddress {
 		return v.value.([4]byte), true
 	}
 	return [4]byte{}, false
@@ -74,7 +74,7 @@ func (v IndexValue) IpAddress() ([4]byte, bool) {
 // IP returns the IPv4 address as [net.IP], or nil if this is not an
 // IP address index.
 func (v IndexValue) IP() net.IP {
-	if v.kind == IndexValueIpAddress {
+	if v.kind == IndexValueIPAddress {
 		b := v.value.([4]byte)
 		return net.IPv4(b[0], b[1], b[2], b[3])
 	}
@@ -102,7 +102,7 @@ func (v IndexValue) String() string {
 	switch v.kind {
 	case IndexValueInteger:
 		return strconv.FormatUint(uint64(v.value.(uint32)), 10)
-	case IndexValueIpAddress:
+	case IndexValueIPAddress:
 		b := v.value.([4]byte)
 		return net.IPv4(b[0], b[1], b[2], b[3]).String()
 	case IndexValueOctetString:
@@ -167,12 +167,12 @@ func (d DecodedIndex) String() string {
 //   - An index component has [IndexEncodingUnknown]
 //   - A fixed-size index has no determinable SIZE constraint
 //   - There are not enough arcs for a component
-//   - An octet-valued arc (IpAddress, OCTET STRING) exceeds 255
+//   - An octet-valued arc (IPAddress, OCTET STRING) exceeds 255
 //
 // Encoding rules (RFC 2578 section 7.7):
 //
 //   - Integer: 1 arc (single sub-identifier)
-//   - IpAddress: 4 arcs (one per octet)
+//   - IPAddress: 4 arcs (one per octet)
 //   - FixedString: n arcs (n = fixed SIZE constraint)
 //   - LengthPrefixed: 1 + n arcs (first arc is length)
 //   - Implied: remaining arcs (last index only)
@@ -194,7 +194,7 @@ func DecodeSuffix(indexes []IndexEntry, suffix OID) []DecodedIndex {
 			value = IndexValue{kind: IndexValueInteger, value: suffix[pos]}
 			consumed = 1
 
-		case IndexEncodingIpAddress:
+		case IndexEncodingIPAddress:
 			if pos+4 > len(suffix) {
 				return result
 			}
@@ -202,7 +202,7 @@ func DecodeSuffix(indexes []IndexEntry, suffix OID) []DecodedIndex {
 			if !ok {
 				return result
 			}
-			value = IndexValue{kind: IndexValueIpAddress, value: [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}}
+			value = IndexValue{kind: IndexValueIPAddress, value: [4]byte{bytes[0], bytes[1], bytes[2], bytes[3]}}
 			consumed = 4
 
 		case IndexEncodingFixedString:

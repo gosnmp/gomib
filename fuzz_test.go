@@ -15,7 +15,7 @@ import (
 var allBaseTypes = []mib.BaseType{
 	mib.BaseInteger32, mib.BaseUnsigned32, mib.BaseCounter32,
 	mib.BaseCounter64, mib.BaseGauge32, mib.BaseTimeTicks,
-	mib.BaseIpAddress, mib.BaseOctetString, mib.BaseObjectIdentifier,
+	mib.BaseIPAddress, mib.BaseOctetString, mib.BaseObjectIdentifier,
 	mib.BaseBits, mib.BaseOpaque, mib.BaseSequence,
 }
 

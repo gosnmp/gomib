@@ -504,7 +504,7 @@ func TestParseDisplayHintOctetDisplayString(t *testing.T) {
 		t.Fatalf("expected 1 segment, got %d", len(os.Segments))
 	}
 	s := os.Segments[0]
-	if s.Length != 255 || s.Format != OctetAscii || s.Repeat || s.Separator != 0 {
+	if s.Length != 255 || s.Format != OctetASCII || s.Repeat || s.Separator != 0 {
 		t.Errorf("unexpected segment: %+v", s)
 	}
 	if !os.IsText() {
@@ -608,7 +608,7 @@ func TestParseDisplayHintOctetZeroWidth(t *testing.T) {
 	if len(os.Segments) != 3 {
 		t.Fatalf("expected 3 segments, got %d", len(os.Segments))
 	}
-	if os.Segments[0].Length != 0 || os.Segments[0].Format != OctetAscii || os.Segments[0].Separator != '[' {
+	if os.Segments[0].Length != 0 || os.Segments[0].Format != OctetASCII || os.Segments[0].Separator != '[' {
 		t.Errorf("seg 0: %+v", os.Segments[0])
 	}
 }

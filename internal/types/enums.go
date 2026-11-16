@@ -223,7 +223,7 @@ const (
 	BaseCounter64
 	BaseGauge32
 	BaseTimeTicks
-	BaseIpAddress
+	BaseIPAddress
 	BaseOctetString
 	BaseObjectIdentifier
 	BaseBits
@@ -268,7 +268,7 @@ const (
 	IndexEncodingFixedString                         // n sub-identifiers, n = fixed SIZE
 	IndexEncodingLengthPrefixed                      // n+1 sub-identifiers, length prefix
 	IndexEncodingImplied                             // n sub-identifiers, no prefix (IMPLIED)
-	IndexEncodingIpAddress                           // 4 sub-identifiers
+	IndexEncodingIPAddress                           // 4 sub-identifiers
 )
 
 var indexEncodingNames = [...]string{

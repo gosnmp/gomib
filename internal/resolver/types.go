@@ -27,12 +27,12 @@ var applicationBaseTypes = map[string]model.BaseType{
 	"Gauge32":    model.BaseGauge32,
 	"Unsigned32": model.BaseUnsigned32,
 	"TimeTicks":  model.BaseTimeTicks,
-	"IpAddress":  model.BaseIpAddress,
+	"IpAddress":  model.BaseIPAddress,
 	"Opaque":     model.BaseOpaque,
 	// SMIv1 equivalents
 	"Counter":        model.BaseCounter32,
 	"Gauge":          model.BaseGauge32,
-	"NetworkAddress": model.BaseIpAddress,
+	"NetworkAddress": model.BaseIPAddress,
 }
 
 // baseTypeDescriptions provides RFC-sourced descriptions for well-known base
@@ -395,7 +395,7 @@ func inheritBaseTypes(ctx *resolverContext) {
 func isApplicationBaseType(b model.BaseType) bool {
 	switch b {
 	case model.BaseCounter32, model.BaseCounter64, model.BaseGauge32,
-		model.BaseUnsigned32, model.BaseTimeTicks, model.BaseIpAddress, model.BaseOpaque:
+		model.BaseUnsigned32, model.BaseTimeTicks, model.BaseIPAddress, model.BaseOpaque:
 		return true
 	default:
 		return false
@@ -433,7 +433,7 @@ func syntaxToBaseType(syntax module.TypeSyntax) (model.BaseType, bool) {
 		case "TimeTicks":
 			return model.BaseTimeTicks, true
 		case "IpAddress":
-			return model.BaseIpAddress, true
+			return model.BaseIPAddress, true
 		case "Opaque":
 			return model.BaseOpaque, true
 		case "OCTET STRING":

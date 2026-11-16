@@ -124,7 +124,7 @@ const (
 	TokKwCounter32
 	TokKwCounter64
 	TokKwGauge32
-	TokKwIpAddress
+	TokKwIPAddress
 	TokKwOpaque
 	TokKwTimeTicks
 	TokKwBits
@@ -293,7 +293,7 @@ var libsmiNames = [...]string{
 	TokKwCounter32:           "COUNTER32",
 	TokKwCounter64:           "COUNTER64",
 	TokKwGauge32:             "GAUGE32",
-	TokKwIpAddress:           "IPADDRESS",
+	TokKwIPAddress:           "IPADDRESS",
 	TokKwOpaque:              "OPAQUE",
 	TokKwTimeTicks:           "TIMETICKS",
 	TokKwBits:                "BITS",
