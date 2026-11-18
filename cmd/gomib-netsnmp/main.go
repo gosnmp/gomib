@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/golangsnmp/gomib/cmd/internal/cliutil"
+	"github.com/gosnmp/gomib/cmd/internal/cliutil"
 )
 
 const usage = `gomib-netsnmp - Compare gomib against net-snmp

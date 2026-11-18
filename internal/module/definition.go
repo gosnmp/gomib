@@ -1,7 +1,7 @@
 package module
 
 import (
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // Definition is a normalized MIB definition. SMIv1 and SMIv2 forms are

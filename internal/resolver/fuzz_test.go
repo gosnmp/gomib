@@ -3,11 +3,11 @@ package resolver
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/cst/lower"
-	cstparser "github.com/golangsnmp/gomib/internal/cst/parser"
-	"github.com/golangsnmp/gomib/internal/model"
-	"github.com/golangsnmp/gomib/internal/module"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/cst/lower"
+	cstparser "github.com/gosnmp/gomib/internal/cst/parser"
+	"github.com/gosnmp/gomib/internal/model"
+	"github.com/gosnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // FuzzFormatOID fuzzes the FormatOID method against a resolved MIB tree.

@@ -11,9 +11,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/cmd/internal/cliutil"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/cmd/internal/cliutil"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // SemanticComparison holds the results of comparing gomib and libsmi output.

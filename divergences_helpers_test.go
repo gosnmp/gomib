@@ -9,7 +9,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 func typesEquivalent(gomibType, fixtureType string) bool {

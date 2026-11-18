@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 func tokenKinds(source string) []TokenKind {

@@ -3,7 +3,7 @@ package gomib_test
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 func TestNormalizeTypeName(t *testing.T) {

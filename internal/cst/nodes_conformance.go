@@ -1,6 +1,6 @@
 package cst
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // ComplianceModuleNode is a MODULE clause within MODULE-COMPLIANCE.
 type ComplianceModuleNode struct {

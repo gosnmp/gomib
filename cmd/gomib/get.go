@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 const (

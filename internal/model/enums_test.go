@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 func TestSeverityString(t *testing.T) {

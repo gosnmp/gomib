@@ -12,9 +12,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/internal/testutil"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // loadProblemMIB loads a problem MIB by name using both the primary corpus

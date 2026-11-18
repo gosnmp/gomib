@@ -9,10 +9,10 @@
 package syntax
 
 import (
-	"github.com/golangsnmp/gomib/internal/cst"
-	cstparser "github.com/golangsnmp/gomib/internal/cst/parser"
-	"github.com/golangsnmp/gomib/internal/lexer"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/cst"
+	cstparser "github.com/gosnmp/gomib/internal/cst/parser"
+	"github.com/gosnmp/gomib/internal/lexer"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // --- Lexer types ---

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // firstDefinition returns the definition with the smallest span start across

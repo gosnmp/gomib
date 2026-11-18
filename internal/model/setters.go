@@ -1,6 +1,6 @@
 package model
 
-import "github.com/golangsnmp/gomib/internal/module"
+import "github.com/gosnmp/gomib/internal/module"
 
 // --- Mib setters ---
 

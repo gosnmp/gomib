@@ -10,9 +10,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golangsnmp/gomib/internal/model"
-	"github.com/golangsnmp/gomib/internal/module"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/model"
+	"github.com/gosnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // checkIntegerMisuse flags bare INTEGER usage in SMIv2 modules. RFC 2578

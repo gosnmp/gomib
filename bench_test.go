@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 func BenchmarkLoadAllCorpus(b *testing.B) {

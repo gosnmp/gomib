@@ -3,12 +3,12 @@ package gomib
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/cst/lower"
-	cstparser "github.com/golangsnmp/gomib/internal/cst/parser"
-	"github.com/golangsnmp/gomib/internal/module"
-	"github.com/golangsnmp/gomib/internal/testutil"
-	"github.com/golangsnmp/gomib/internal/types"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/internal/cst/lower"
+	cstparser "github.com/gosnmp/gomib/internal/cst/parser"
+	"github.com/gosnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // allBaseTypes enumerates all BaseType values for ObjectsByBaseType fuzzing.

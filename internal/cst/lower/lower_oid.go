@@ -1,8 +1,8 @@
 package lower
 
 import (
-	"github.com/golangsnmp/gomib/internal/cst"
-	"github.com/golangsnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/cst"
+	"github.com/gosnmp/gomib/internal/module"
 )
 
 // lowerOidValue converts a CST OidValueNode to module.OidAssignment.

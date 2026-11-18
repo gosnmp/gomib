@@ -1,6 +1,6 @@
 package cst
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // ObjectTypeNode is an OBJECT-TYPE definition.
 type ObjectTypeNode struct {

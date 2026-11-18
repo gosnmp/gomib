@@ -1,6 +1,6 @@
 package resolver
 
-import "github.com/golangsnmp/gomib/internal/module"
+import "github.com/gosnmp/gomib/internal/module"
 
 // symbolTable is a per-module symbol map used throughout resolution.
 // The zero value is not usable; create with make(symbolTable[T]).

@@ -3,7 +3,7 @@ package syntax_test
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/syntax"
+	"github.com/gosnmp/gomib/syntax"
 )
 
 func TestLineTable_LineCol(t *testing.T) {

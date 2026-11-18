@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/internal/types"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/mib"
 )
 
 const lintUsage = `gomib lint - Check MIB modules for issues
@@ -449,7 +449,7 @@ func (c *cli) printLintSARIF(result *lintResult) error {
 			Tool: sarifTool{
 				Driver: sarifDriver{
 					Name:           "gomib",
-					InformationURI: "https://github.com/golangsnmp/gomib",
+					InformationURI: "https://github.com/gosnmp/gomib",
 					Rules:          buildSARIFRules(result),
 				},
 			},

@@ -6,8 +6,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 const inspectUsage = `gomib inspect - Deep-dive inspection of a MIB symbol

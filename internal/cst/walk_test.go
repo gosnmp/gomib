@@ -3,8 +3,8 @@ package cst
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/lexer"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/lexer"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 func TestReconstructEmptyModule(t *testing.T) {

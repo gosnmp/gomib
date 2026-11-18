@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // printObjectIndexAugments prints Index, Augments, AugmentedBy, and EffectiveIndex.

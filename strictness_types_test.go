@@ -3,8 +3,8 @@ package gomib_test
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // resolve_strictness_types_test.go covers strictness behavior for type lookup,

@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golangsnmp/gomib/cmd/internal/cliutil"
+	"github.com/gosnmp/gomib/cmd/internal/cliutil"
 )
 
 // ValidationResult tallies test cases checked against net-snmp ground truth.

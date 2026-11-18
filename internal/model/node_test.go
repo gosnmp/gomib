@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 // buildTree constructs:

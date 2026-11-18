@@ -1,6 +1,6 @@
 package mib
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // Diagnostic represents an issue found during parsing or resolution. Source
 // positions are 1-based; Line/Column are inclusive and EndLine/EndColumn are

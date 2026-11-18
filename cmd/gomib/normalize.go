@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/golangsnmp/gomib/smiwrite"
+	"github.com/gosnmp/gomib/smiwrite"
 )
 
 const normalizeUsage = `gomib normalize - Emit modules as canonical SMIv2 text

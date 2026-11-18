@@ -1,6 +1,6 @@
 package cst
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // OidValueNode represents a braced OID value: { component component ... }
 type OidValueNode struct {

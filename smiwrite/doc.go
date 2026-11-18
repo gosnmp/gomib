@@ -7,7 +7,7 @@
 // # Overview
 //
 // Use [Write] or [WriteAll] with a resolved
-// [github.com/golangsnmp/gomib/mib.Mib] model when you need stable,
+// [github.com/gosnmp/gomib/mib.Mib] model when you need stable,
 // generated module text for normalization, fixture generation, or
 // cross-tool comparison.
 package smiwrite

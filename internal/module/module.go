@@ -21,7 +21,7 @@ import (
 	"iter"
 	"slices"
 
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // Module is a normalized, language-independent MIB module.

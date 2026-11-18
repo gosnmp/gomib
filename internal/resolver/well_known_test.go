@@ -3,7 +3,7 @@ package resolver
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 // Test-only helpers for wellKnownTypes classification.

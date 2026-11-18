@@ -10,7 +10,7 @@
 //
 // # Overview
 //
-// This package is the main query surface after [github.com/golangsnmp/gomib.Load]:
+// This package is the main query surface after [github.com/gosnmp/gomib.Load]:
 //
 //   - [Mib] provides top-level lookup and iteration across loaded data.
 //   - [Module] scopes queries and exposes import metadata.
@@ -32,6 +32,6 @@
 //
 // The package also contains the resolver entry point, [Resolve], which
 // transforms normalized internal modules into a fully linked [Mib]. Most
-// external callers should prefer [github.com/golangsnmp/gomib.Load] unless
+// external callers should prefer [github.com/gosnmp/gomib.Load] unless
 // they are deliberately assembling a lower-level pipeline.
 package mib

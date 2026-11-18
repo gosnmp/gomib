@@ -12,9 +12,9 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/golangsnmp/gomib"
-	"github.com/golangsnmp/gomib/cmd/internal/cliutil"
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib"
+	"github.com/gosnmp/gomib/cmd/internal/cliutil"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // DiagComparison holds side-by-side diagnostic output from gomib and libsmi.

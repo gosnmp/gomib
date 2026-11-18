@@ -17,7 +17,7 @@
 //
 // # Query Model
 //
-// The resolved query model lives in the [github.com/golangsnmp/gomib/mib]
+// The resolved query model lives in the [github.com/gosnmp/gomib/mib]
 // package. Callers typically load through [Load] here, then query the
 // resulting [mib.Mib] for modules, objects, types, notifications, table
 // structure, and OID lookups.
@@ -25,5 +25,5 @@
 // # Lower-Level Access
 //
 // For lower-level lexical access without full loading, use the
-// [github.com/golangsnmp/gomib/token] package.
+// [github.com/gosnmp/gomib/token] package.
 package gomib

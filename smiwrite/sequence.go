@@ -3,7 +3,7 @@ package smiwrite
 import (
 	"fmt"
 
-	"github.com/golangsnmp/gomib/mib"
+	"github.com/gosnmp/gomib/mib"
 )
 
 // emitSequence writes a reconstructed SEQUENCE type for a row object.

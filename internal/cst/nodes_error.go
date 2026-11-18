@@ -1,6 +1,6 @@
 package cst
 
-import "github.com/golangsnmp/gomib/internal/types"
+import "github.com/gosnmp/gomib/internal/types"
 
 // ErrorNode wraps tokens that could not be parsed into a valid production.
 type ErrorNode struct {

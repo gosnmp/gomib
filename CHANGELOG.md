@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking Changes
+
+- Move the Go module from `github.com/golangsnmp/gomib` to `github.com/gosnmp/gomib`; update module dependencies and imports to the new path
+
+### Changed
+
+- Move the repository to the `gosnmp` organization and update documentation, badges, tooling, and repository links
+- Update the copyright holder from `golangsnmp` to `gosnmp`
+
+### Removed
+
+- Remove the Go Report Card badge from the README
+
 ## [0.13.2] - 2026-08-13
 
 ### Changed
@@ -191,12 +204,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix path traversal in normalize output path
 - Fix godoc link to mib.DiagnosticConfig
 
-[Unreleased]: https://github.com/golangsnmp/gomib/compare/v0.13.2...HEAD
-[0.13.2]: https://github.com/golangsnmp/gomib/compare/v0.13.1...v0.13.2
-[0.13.1]: https://github.com/golangsnmp/gomib/compare/v0.13.0...v0.13.1
-[0.13.0]: https://github.com/golangsnmp/gomib/compare/v0.12.0...v0.13.0
-[0.12.0]: https://github.com/golangsnmp/gomib/compare/v0.11.0...v0.12.0
-[0.11.0]: https://github.com/golangsnmp/gomib/compare/v0.10.0...v0.11.0
-[0.10.0]: https://github.com/golangsnmp/gomib/compare/v0.9.0...v0.10.0
-[0.9.0]: https://github.com/golangsnmp/gomib/compare/v0.8.0...v0.9.0
-[0.8.0]: https://github.com/golangsnmp/gomib/compare/v0.7.1...v0.8.0
+[Unreleased]: https://github.com/gosnmp/gomib/compare/v0.13.2...HEAD
+[0.13.2]: https://github.com/gosnmp/gomib/compare/v0.13.1...v0.13.2
+[0.13.1]: https://github.com/gosnmp/gomib/compare/v0.13.0...v0.13.1
+[0.13.0]: https://github.com/gosnmp/gomib/compare/v0.12.0...v0.13.0
+[0.12.0]: https://github.com/gosnmp/gomib/compare/v0.11.0...v0.12.0
+[0.11.0]: https://github.com/gosnmp/gomib/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/gosnmp/gomib/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/gosnmp/gomib/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/gosnmp/gomib/compare/v0.7.1...v0.8.0

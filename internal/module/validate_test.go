@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/testutil"
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // validateAndFindDiagnostic runs ValidateModule on a module and returns the

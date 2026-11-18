@@ -2,7 +2,7 @@
 package lexer
 
 import (
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 // Token represents a lexed unit with its classification and source location.

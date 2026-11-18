@@ -3,8 +3,8 @@ package resolver
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/module"
-	"github.com/golangsnmp/gomib/internal/testutil"
+	"github.com/gosnmp/gomib/internal/module"
+	"github.com/gosnmp/gomib/internal/testutil"
 )
 
 func TestSymbolTable_GetSet(t *testing.T) {

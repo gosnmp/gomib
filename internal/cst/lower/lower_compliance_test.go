@@ -3,7 +3,7 @@ package lower_test
 import (
 	"testing"
 
-	"github.com/golangsnmp/gomib/internal/types"
+	"github.com/gosnmp/gomib/internal/types"
 )
 
 func TestComplianceSyntaxRefinement(t *testing.T) {
