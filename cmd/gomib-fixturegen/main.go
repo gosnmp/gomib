@@ -426,8 +426,8 @@ func normalizeComplianceModule(cm *mib.ComplianceModule) NormalizedComplianceMod
 	}
 	for _, obj := range cm.Objects {
 		minAccess := ""
-		if obj.MinAccess != nil {
-			minAccess = obj.MinAccess.String()
+		if value, ok := obj.MinAccess(); ok {
+			minAccess = value.String()
 		}
 		out.Objects = append(out.Objects, NormalizedComplianceObject{
 			Object:      obj.Object,
@@ -448,8 +448,8 @@ func normalizeCapabilityModule(cm *mib.CapabilitiesModule) NormalizedCapabilityM
 	for i := range cm.ObjectVariations {
 		ov := &cm.ObjectVariations[i]
 		access := ""
-		if ov.Access != nil {
-			access = ov.Access.String()
+		if value, ok := ov.Access(); ok {
+			access = value.String()
 		}
 		defval := ""
 		if !ov.DefVal.IsZero() {
@@ -467,8 +467,8 @@ func normalizeCapabilityModule(cm *mib.CapabilitiesModule) NormalizedCapabilityM
 	}
 	for _, nv := range cm.NotificationVariations {
 		access := ""
-		if nv.Access != nil {
-			access = nv.Access.String()
+		if value, ok := nv.Access(); ok {
+			access = value.String()
 		}
 		out.NotificationVariations = append(out.NotificationVariations, NormalizedNotificationVariation{
 			Notification: nv.Notification,

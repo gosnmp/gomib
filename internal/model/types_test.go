@@ -265,7 +265,6 @@ func TestModuleImportsDeepClone(t *testing.T) {
 
 func TestComplianceModulesDeepClone(t *testing.T) {
 	c := NewCompliance("testCompliance")
-	access := AccessReadOnly
 	c.setModules([]ComplianceModule{
 		{
 			ModuleName:      "IF-MIB",
@@ -275,7 +274,6 @@ func TestComplianceModulesDeepClone(t *testing.T) {
 				Object:      "ifType",
 				Syntax:      &SyntaxConstraints{Sizes: []Range{{Min: NewSignedRangeBound(1), Max: NewSignedRangeBound(255)}}},
 				WriteSyntax: &SyntaxConstraints{Ranges: []Range{{Min: NewSignedRangeBound(0), Max: NewSignedRangeBound(100)}}},
-				MinAccess:   &access,
 				Description: "obj desc",
 			}},
 		},

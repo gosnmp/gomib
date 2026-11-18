@@ -293,8 +293,8 @@ func (c *cli) inspectCompliance(m *mib.Mib, comp *mib.Compliance) {
 		}
 		for _, co := range cm.Objects {
 			fmt.Fprintf(c.stdout, "  Object: %s\n", co.Object)
-			if co.MinAccess != nil {
-				fmt.Fprintf(c.stdout, "    MIN-ACCESS: %s\n", co.MinAccess.String())
+			if access, ok := co.MinAccess(); ok {
+				fmt.Fprintf(c.stdout, "    MIN-ACCESS: %s\n", access.String())
 			}
 			if co.Description != "" {
 				fmt.Fprintf(c.stdout, "    %s\n", normalizeDescription(co.Description, 200))
@@ -325,8 +325,8 @@ func (c *cli) inspectCapability(m *mib.Mib, mibCap *mib.Capability) {
 		for i := range sm.ObjectVariations {
 			ov := &sm.ObjectVariations[i]
 			fmt.Fprintf(c.stdout, "  Variation: %s\n", ov.Object)
-			if ov.Access != nil {
-				fmt.Fprintf(c.stdout, "    ACCESS: %s\n", ov.Access.String())
+			if access, ok := ov.Access(); ok {
+				fmt.Fprintf(c.stdout, "    ACCESS: %s\n", access.String())
 			}
 			if ov.Description != "" {
 				fmt.Fprintf(c.stdout, "    %s\n", normalizeDescription(ov.Description, 200))
@@ -334,8 +334,8 @@ func (c *cli) inspectCapability(m *mib.Mib, mibCap *mib.Capability) {
 		}
 		for _, nv := range sm.NotificationVariations {
 			fmt.Fprintf(c.stdout, "  Variation: %s\n", nv.Notification)
-			if nv.Access != nil {
-				fmt.Fprintf(c.stdout, "    ACCESS: %s\n", nv.Access.String())
+			if access, ok := nv.Access(); ok {
+				fmt.Fprintf(c.stdout, "    ACCESS: %s\n", access.String())
 			}
 			if nv.Description != "" {
 				fmt.Fprintf(c.stdout, "    %s\n", normalizeDescription(nv.Description, 200))

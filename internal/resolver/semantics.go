@@ -770,7 +770,7 @@ func convertComplianceModules(ctx *resolverContext, mod *module.Module, modules 
 				objects[j].Syntax = resolveSyntaxConstraints(ctx, o.Syntax, mod, o.Object, o.Span)
 				objects[j].WriteSyntax = resolveSyntaxConstraints(ctx, o.WriteSyntax, mod, o.Object, o.Span)
 				if o.MinAccess != nil {
-					objects[j].MinAccess = o.MinAccess
+					model.SetComplianceObjectMinAccess(&objects[j], *o.MinAccess)
 				}
 			}
 			result[i].Objects = objects
@@ -827,7 +827,7 @@ func convertSupportsModules(ctx *resolverContext, mod *module.Module, modules []
 					Span:         v.Span,
 				}
 				if v.Access != nil {
-					nv.Access = v.Access
+					model.SetNotificationVariationAccess(&nv, *v.Access)
 					if *v.Access != model.AccessNotImplemented {
 						ctx.EmitDiagnostic(types.DiagVariationAccessNotifOnly,
 							mod, v.Span,
@@ -847,7 +847,7 @@ func convertSupportsModules(ctx *resolverContext, mod *module.Module, modules []
 					ov.CreationRequires = convertNameRefs(v.CreationRequires)
 				}
 				if v.Access != nil {
-					ov.Access = v.Access
+					model.SetObjectVariationAccess(&ov, *v.Access)
 				}
 				if v.DefVal != nil {
 					if dv := convertDefVal(ctx, v.DefVal, mod, v.Syntax, v.Span); dv != nil {

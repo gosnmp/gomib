@@ -732,25 +732,28 @@ func TestConvertComplianceModules(t *testing.T) {
 	})
 
 	t.Run("module with objects and min-access", func(t *testing.T) {
-		readOnly := types.AccessReadOnly
+		minAccess := types.AccessNotAccessible
 		input := []module.ComplianceModule{
 			{
 				ModuleName: "IF-MIB",
 				Objects: []module.ComplianceObject{
-					{Object: "ifAdminStatus", MinAccess: &readOnly, Description: "obj desc"},
+					{Object: "ifAdminStatus", MinAccess: &minAccess, Description: "obj desc"},
 					{Object: "ifOperStatus", MinAccess: nil},
 				},
 			},
 		}
 		result := convertComplianceModules(nil, nil, input)
+		minAccess = types.AccessReadWrite
 		testutil.Len(t, result[0].Objects, 2, "objects")
 		obj0 := result[0].Objects[0]
 		testutil.Equal(t, "ifAdminStatus", obj0.Object, "object")
-		testutil.NotNil(t, obj0.MinAccess, "min-access")
-		testutil.Equal(t, model.AccessReadOnly, *obj0.MinAccess, "min-access")
+		access, ok := obj0.MinAccess()
+		testutil.True(t, ok, "min-access")
+		testutil.Equal(t, model.AccessNotAccessible, access, "min-access")
 		testutil.Equal(t, "obj desc", obj0.Description, "desc")
 		obj1 := result[0].Objects[1]
-		testutil.Nil(t, obj1.MinAccess, "expected nil min-access for second object")
+		_, ok = obj1.MinAccess()
+		testutil.False(t, ok, "omitted access clause")
 	})
 
 	t.Run("multiple modules", func(t *testing.T) {
@@ -852,13 +855,16 @@ func TestConvertSupportsModules(t *testing.T) {
 			},
 		}
 		result := convertSupportsModules(ctx, mod, input)
+		readOnly = types.AccessReadWrite
 		vars := result[0].ObjectVariations
 		testutil.Len(t, vars, 2, "variations")
 		testutil.Equal(t, "ifAdminStatus", vars[0].Object, "object")
-		testutil.NotNil(t, vars[0].Access, "access")
-		testutil.Equal(t, model.AccessReadOnly, *vars[0].Access, "access")
+		access, ok := vars[0].Access()
+		testutil.True(t, ok, "access")
+		testutil.Equal(t, model.AccessReadOnly, access, "access")
 		testutil.Equal(t, "read only", vars[0].Description, "desc")
-		testutil.Nil(t, vars[1].Access, "expected nil access for second variation")
+		_, ok = vars[1].Access()
+		testutil.False(t, ok, "omitted access clause")
 	})
 
 	t.Run("notification variations with access", func(t *testing.T) {
@@ -876,13 +882,16 @@ func TestConvertSupportsModules(t *testing.T) {
 			},
 		}
 		result := convertSupportsModules(ctx, mod, input)
+		notImpl = types.AccessReadWrite
 		vars := result[0].NotificationVariations
 		testutil.Len(t, vars, 2, "notification variations")
 		testutil.Equal(t, "linkDown", vars[0].Notification, "notification")
-		testutil.NotNil(t, vars[0].Access, "access")
-		testutil.Equal(t, model.AccessNotImplemented, *vars[0].Access, "access")
+		access, ok := vars[0].Access()
+		testutil.True(t, ok, "access")
+		testutil.Equal(t, model.AccessNotImplemented, access, "access")
 		testutil.Equal(t, "not supported", vars[0].Description, "desc")
-		testutil.Nil(t, vars[1].Access, "expected nil access for second variation")
+		_, ok = vars[1].Access()
+		testutil.False(t, ok, "omitted access clause")
 	})
 
 	t.Run("not-implemented access preserved in variations", func(t *testing.T) {
@@ -900,8 +909,9 @@ func TestConvertSupportsModules(t *testing.T) {
 		result := convertSupportsModules(ctx, mod, input)
 		vars := result[0].ObjectVariations
 		testutil.Len(t, vars, 1, "variations")
-		testutil.NotNil(t, vars[0].Access, "access is nil, want not-implemented")
-		testutil.Equal(t, model.AccessNotImplemented, *vars[0].Access, "access")
+		access, ok := vars[0].Access()
+		testutil.True(t, ok, "explicit access clause")
+		testutil.Equal(t, model.AccessNotImplemented, access, "access")
 	})
 
 	t.Run("mixed object and notification variations", func(t *testing.T) {
@@ -1521,16 +1531,18 @@ func TestCreateResolvedCapabilities(t *testing.T) {
 	testutil.Equal(t, "ifAdminStatus", objVar.Object, "object variation name")
 	testutil.NotNil(t, objVar.Syntax, "object variation syntax")
 	testutil.Equal(t, displayType, objVar.Syntax.Type, "object variation syntax type")
-	testutil.NotNil(t, objVar.Access, "object variation access")
-	testutil.Equal(t, model.AccessReadOnly, *objVar.Access, "object variation access")
+	access, ok := objVar.Access()
+	testutil.True(t, ok, "object variation access")
+	testutil.Equal(t, model.AccessReadOnly, access, "object variation access")
 	testutil.Len(t, objVar.CreationRequires, 1, "object variation creation-requires")
 	testutil.Equal(t, "ifIndex", objVar.CreationRequires[0].Name, "object variation creation-requires")
 	testutil.Equal(t, model.DefValKindString, objVar.DefVal.Kind(), "object variation defval kind")
 
 	notifVar := supports[0].NotificationVariations[0]
 	testutil.Equal(t, "linkDown", notifVar.Notification, "notification variation name")
-	testutil.NotNil(t, notifVar.Access, "notification variation access")
-	testutil.Equal(t, model.AccessReadOnly, *notifVar.Access, "notification variation access")
+	access, ok = notifVar.Access()
+	testutil.True(t, ok, "notification variation access")
+	testutil.Equal(t, model.AccessReadOnly, access, "notification variation access")
 
 	hasDiag(t, ctx.Diagnostics(), types.DiagVariationAccessNotifOnly)
 }

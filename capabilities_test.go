@@ -136,15 +136,17 @@ func TestCapabilitySupports(t *testing.T) {
 	// sysDescr: ACCESS read-only
 	sysDescr, ok := variationMap["sysDescr"]
 	testutil.True(t, ok, "should have sysDescr variation")
-	testutil.NotNil(t, sysDescr.Access, "sysDescr should have ACCESS")
-	testutil.Equal(t, mib.AccessReadOnly, *sysDescr.Access,
+	access, ok := sysDescr.Access()
+	testutil.True(t, ok, "sysDescr should have ACCESS")
+	testutil.Equal(t, mib.AccessReadOnly, access,
 		"sysDescr ACCESS should be read-only")
 
 	// sysORLastChange: ACCESS not-implemented
 	sysORLastChange, ok := variationMap["sysORLastChange"]
 	testutil.True(t, ok, "should have sysORLastChange variation")
-	testutil.NotNil(t, sysORLastChange.Access, "sysORLastChange should have ACCESS")
-	testutil.Equal(t, mib.AccessNotImplemented, *sysORLastChange.Access,
+	access, ok = sysORLastChange.Access()
+	testutil.True(t, ok, "sysORLastChange should have ACCESS")
+	testutil.Equal(t, mib.AccessNotImplemented, access,
 		"sysORLastChange ACCESS should be not-implemented")
 }
 

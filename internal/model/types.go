@@ -494,9 +494,16 @@ type ComplianceObject struct {
 	Object      string             // object reference name
 	Syntax      *SyntaxConstraints // SYNTAX refinement (nil if not specified)
 	WriteSyntax *SyntaxConstraints // WRITE-SYNTAX refinement (nil if not specified)
-	MinAccess   *Access            // MIN-ACCESS restriction (nil if not specified)
 	Description string
 	Span        Span
+
+	minAccess    Access
+	hasMinAccess bool
+}
+
+// MinAccess returns the MIN-ACCESS restriction and whether the clause was specified.
+func (o *ComplianceObject) MinAccess() (Access, bool) {
+	return o.minAccess, o.hasMinAccess
 }
 
 // clone returns a deep copy of the ComplianceModule.
@@ -549,19 +556,33 @@ type ObjectVariation struct {
 	Object           string             // object reference name
 	Syntax           *SyntaxConstraints // SYNTAX refinement (nil if not specified)
 	WriteSyntax      *SyntaxConstraints // WRITE-SYNTAX refinement (nil if not specified)
-	Access           *Access            // ACCESS restriction (nil if not specified)
 	CreationRequires []NameRef          // CREATION-REQUIRES columns (nil if not specified)
 	DefVal           DefVal             // overridden default value (zero if not specified)
 	Description      string
 	Span             Span
+
+	access    Access
+	hasAccess bool
+}
+
+// Access returns the ACCESS restriction and whether the clause was specified.
+func (v *ObjectVariation) Access() (Access, bool) {
+	return v.access, v.hasAccess
 }
 
 // NotificationVariation is a notification VARIATION within AGENT-CAPABILITIES.
 type NotificationVariation struct {
-	Notification string  // notification reference name
-	Access       *Access // ACCESS restriction (nil if not specified)
+	Notification string // notification reference name
 	Description  string
 	Span         Span
+
+	access    Access
+	hasAccess bool
+}
+
+// Access returns the ACCESS restriction and whether the clause was specified.
+func (v *NotificationVariation) Access() (Access, bool) {
+	return v.access, v.hasAccess
 }
 
 // SyntaxConstraints holds a resolved type reference and any inline

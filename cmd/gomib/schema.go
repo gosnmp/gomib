@@ -1154,8 +1154,8 @@ func buildExportCompliance(comp *mib.Compliance, m *mib.Mib) ExportCompliance {
 				WriteSyntax: exportSyntaxConstraints(co.WriteSyntax),
 				Description: strPtr(co.Description),
 			}
-			if co.MinAccess != nil {
-				s := co.MinAccess.String()
+			if access, ok := co.MinAccess(); ok {
+				s := access.String()
 				vco.MinAccess = &s
 			}
 			vcm.Objects = append(vcm.Objects, vco)
@@ -1214,8 +1214,8 @@ func buildExportCapability(mibCap *mib.Capability, m *mib.Mib) ExportCapability 
 				Description:      strPtr(ov.Description),
 				CreationRequires: make([]ExportObjRef, 0),
 			}
-			if ov.Access != nil {
-				a := ov.Access.String()
+			if access, ok := ov.Access(); ok {
+				a := access.String()
 				vov.Access = &a
 			}
 			for _, cr := range ov.CreationRequires {
@@ -1231,8 +1231,8 @@ func buildExportCapability(mibCap *mib.Capability, m *mib.Mib) ExportCapability 
 				Notification: ref,
 				Description:  strPtr(nv.Description),
 			}
-			if nv.Access != nil {
-				a := nv.Access.String()
+			if access, ok := nv.Access(); ok {
+				a := access.String()
 				vnv.Access = &a
 			}
 			vs.NotificationVariations = append(vs.NotificationVariations, vnv)
