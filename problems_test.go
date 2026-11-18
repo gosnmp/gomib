@@ -133,9 +133,9 @@ func TestProblemHexStringBytes(t *testing.T) {
 				t.Fatalf("object %s DEFVAL kind=%v, expected Bytes", tt.name, dv.Kind())
 			}
 
-			got, ok := mib.DefValAs[[]byte](dv)
+			got, ok := dv.Bytes()
 			if !ok {
-				t.Fatalf("DefValAs[[]byte] failed for %s", tt.name)
+				t.Fatalf("Bytes() failed for %s", tt.name)
 			}
 
 			if len(got) != len(tt.wantBytes) {
@@ -869,8 +869,8 @@ func TestProblemDefvalEmptyBits(t *testing.T) {
 	testutil.True(t, !dv.IsZero(), "DefaultValue() should be set")
 	testutil.Equal(t, mib.DefValKindBits, dv.Kind(), "kind")
 
-	labels, ok := mib.DefValAs[[]string](dv)
-	testutil.True(t, ok, "DefValAs[[]string]")
+	labels, ok := dv.Bits()
+	testutil.True(t, ok, "Bits()")
 	testutil.Equal(t, 0, len(labels), "empty BITS should have 0 labels")
 }
 
@@ -886,8 +886,8 @@ func TestProblemDefvalMultiBits(t *testing.T) {
 	testutil.True(t, !dv.IsZero(), "DefaultValue() should be set")
 	testutil.Equal(t, mib.DefValKindBits, dv.Kind(), "kind")
 
-	labels, ok := mib.DefValAs[[]string](dv)
-	testutil.True(t, ok, "DefValAs[[]string]")
+	labels, ok := dv.Bits()
+	testutil.True(t, ok, "Bits()")
 	testutil.Equal(t, 2, len(labels), "multi BITS should have 2 labels")
 
 	hasRead, hasWrite := false, false

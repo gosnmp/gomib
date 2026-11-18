@@ -351,8 +351,61 @@ func NewDefValOID(oid OID, raw string) DefVal {
 // Kind returns the type of the default value.
 func (d DefVal) Kind() DefValKind { return d.kind }
 
-// Value returns the interpreted value.
-func (d DefVal) Value() any { return d.value }
+// Int64 returns the signed integer and true for [DefValKindInt].
+func (d DefVal) Int64() (int64, bool) {
+	if d.kind == DefValKindInt {
+		return d.value.(int64), true
+	}
+	return 0, false
+}
+
+// Uint64 returns the unsigned integer and true for [DefValKindUint].
+func (d DefVal) Uint64() (uint64, bool) {
+	if d.kind == DefValKindUint {
+		return d.value.(uint64), true
+	}
+	return 0, false
+}
+
+// QuotedString returns the contents of a quoted string and true for [DefValKindString].
+func (d DefVal) QuotedString() (string, bool) {
+	if d.kind == DefValKindString {
+		return d.value.(string), true
+	}
+	return "", false
+}
+
+// EnumLabel returns the enumeration label and true for [DefValKindEnum].
+func (d DefVal) EnumLabel() (string, bool) {
+	if d.kind == DefValKindEnum {
+		return d.value.(string), true
+	}
+	return "", false
+}
+
+// Bytes returns a copy of the bytes and true for [DefValKindBytes].
+func (d DefVal) Bytes() ([]byte, bool) {
+	if d.kind == DefValKindBytes {
+		return slices.Clone(d.value.([]byte)), true
+	}
+	return nil, false
+}
+
+// Bits returns a copy of the BITS labels in declaration order and true for [DefValKindBits].
+func (d DefVal) Bits() ([]string, bool) {
+	if d.kind == DefValKindBits {
+		return slices.Clone(d.value.([]string)), true
+	}
+	return nil, false
+}
+
+// OID returns a copy of the object identifier and true for [DefValKindOID].
+func (d DefVal) OID() (OID, bool) {
+	if d.kind == DefValKindOID {
+		return slices.Clone(d.value.(OID)), true
+	}
+	return nil, false
+}
 
 // Raw returns the original MIB syntax.
 func (d DefVal) Raw() string { return d.raw }
@@ -391,19 +444,6 @@ func (d DefVal) IsZero() bool {
 	return d.value == nil
 }
 
-// clone returns a deep copy of the DefVal, cloning any slice-typed values.
-func (d DefVal) clone() DefVal {
-	switch v := d.value.(type) {
-	case []byte:
-		d.value = slices.Clone(v)
-	case []string:
-		d.value = slices.Clone(v)
-	case OID:
-		d.value = slices.Clone(v)
-	}
-	return d
-}
-
 // String returns a human-readable name for the default value kind
 // (e.g. "int", "string", "enum").
 func (k DefValKind) String() string {
@@ -427,15 +467,6 @@ func (k DefValKind) String() string {
 	default:
 		return "DefValKind(" + strconv.Itoa(int(k)) + ")"
 	}
-}
-
-// DefValAs extracts the default value as the concrete type T.
-// It returns the value and true if the underlying value is assignable to T,
-// or the zero value and false otherwise. For example, DefValAs[int64](d)
-// succeeds when d.Kind() is DefValKindInt.
-func DefValAs[T any](d DefVal) (T, bool) {
-	v, ok := d.value.(T)
-	return v, ok
 }
 
 func bytesToHex(b []byte) string {
@@ -508,7 +539,6 @@ func (cm *CapabilitiesModule) clone() CapabilitiesModule {
 		result.ObjectVariations[i].Syntax = result.ObjectVariations[i].Syntax.clone()
 		result.ObjectVariations[i].WriteSyntax = result.ObjectVariations[i].WriteSyntax.clone()
 		result.ObjectVariations[i].CreationRequires = slices.Clone(result.ObjectVariations[i].CreationRequires)
-		result.ObjectVariations[i].DefVal = result.ObjectVariations[i].DefVal.clone()
 	}
 	result.NotificationVariations = slices.Clone(cm.NotificationVariations)
 	return result

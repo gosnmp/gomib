@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - Move the Go module from `github.com/golangsnmp/gomib` to `github.com/gosnmp/gomib`; update module dependencies and imports to the new path
+- Replace `DefVal.Value()` and `mib.DefValAs[T](dv)` with the typed methods
+  `Int64`, `Uint64`, `QuotedString`, `EnumLabel`, `Bytes`, `Bits`, and `OID`.
+  Each returns a value and a match flag. For example, use `labels, ok := dv.Bits()`
+  for a BITS default. Callers own the returned bytes, labels, or OID arcs.
 
 ### Changed
 

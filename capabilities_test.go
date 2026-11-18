@@ -229,8 +229,8 @@ func TestVariationSyntaxWithRangeAndDefVal(t *testing.T) {
 
 	// DEFVAL { 10 }
 	testutil.False(t, valueVar.DefVal.IsZero(), "defval should be set")
-	v, ok := mib.DefValAs[int64](valueVar.DefVal)
-	testutil.True(t, ok, "DefValAs[int64] ok")
+	v, ok := valueVar.DefVal.Int64()
+	testutil.True(t, ok, "Int64() ok")
 	testutil.Equal(t, int64(10), v, "defval value")
 }
 

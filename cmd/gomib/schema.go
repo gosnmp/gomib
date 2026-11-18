@@ -516,28 +516,28 @@ func exportDefaultValue(dv mib.DefVal) *ExportDefaultValue {
 	}
 	switch dv.Kind() { //nolint:exhaustive // DefValKindUnset handled by IsZero check above
 	case mib.DefValKindInt:
-		v, _ := mib.DefValAs[int64](dv)
+		v, _ := dv.Int64()
 		result.Value = strconv.FormatInt(v, 10)
 	case mib.DefValKindUint:
-		v, _ := mib.DefValAs[uint64](dv)
+		v, _ := dv.Uint64()
 		result.Value = strconv.FormatUint(v, 10)
 	case mib.DefValKindString:
-		v, _ := mib.DefValAs[string](dv)
+		v, _ := dv.QuotedString()
 		result.Value = v
 	case mib.DefValKindBytes:
-		v, _ := mib.DefValAs[[]byte](dv)
+		v, _ := dv.Bytes()
 		result.Value = strings.ToUpper(hex.EncodeToString(v))
 	case mib.DefValKindEnum:
-		v, _ := mib.DefValAs[string](dv)
+		v, _ := dv.EnumLabel()
 		result.Value = v
 	case mib.DefValKindBits:
-		v, _ := mib.DefValAs[[]string](dv)
+		v, _ := dv.Bits()
 		if v == nil {
 			v = []string{}
 		}
 		result.Value = v
 	case mib.DefValKindOID:
-		v, _ := mib.DefValAs[mib.OID](dv)
+		v, _ := dv.OID()
 		result.Value = v.String()
 	}
 	return result

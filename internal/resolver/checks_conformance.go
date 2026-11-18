@@ -434,13 +434,12 @@ func checkStorageTypeDefaults(ctx *resolverContext, objRefs []objectTypeRef) {
 func defvalAsInt64(dv model.DefVal, labelToValue map[int64]string) (int64, bool) {
 	switch dv.Kind() {
 	case model.DefValKindInt:
-		v, _ := model.DefValAs[int64](dv)
-		return v, true
+		return dv.Int64()
 	case model.DefValKindUint:
-		uv, _ := model.DefValAs[uint64](dv)
+		uv, _ := dv.Uint64()
 		return int64(uv), true
 	case model.DefValKindEnum:
-		label, _ := model.DefValAs[string](dv)
+		label, _ := dv.EnumLabel()
 		for v, name := range labelToValue {
 			if name == label {
 				return v, true

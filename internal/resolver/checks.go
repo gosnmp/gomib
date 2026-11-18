@@ -669,13 +669,13 @@ func checkDefvalConstraints(ctx *resolverContext, objRefs []objectTypeRef) {
 
 		switch dv.Kind() {
 		case model.DefValKindInt:
-			v, _ := model.DefValAs[int64](dv)
+			v, _ := dv.Int64()
 			checkDefvalNumeric(ctx, ref.mod, obj, v, 0, false, base, ranges, resolved.EffectiveRangesConstrained(), enums)
 		case model.DefValKindUint:
-			v, _ := model.DefValAs[uint64](dv)
+			v, _ := dv.Uint64()
 			checkDefvalNumeric(ctx, ref.mod, obj, 0, v, true, base, ranges, resolved.EffectiveRangesConstrained(), enums)
 		case model.DefValKindEnum:
-			label, _ := model.DefValAs[string](dv)
+			label, _ := dv.EnumLabel()
 			if len(enums) > 0 {
 				if !findNamedValue(enums, label) {
 					ctx.EmitDiagnostic(types.DiagDefvalEnum,
@@ -684,7 +684,7 @@ func checkDefvalConstraints(ctx *resolverContext, objRefs []objectTypeRef) {
 				}
 			}
 		case model.DefValKindBits:
-			labels, _ := model.DefValAs[[]string](dv)
+			labels, _ := dv.Bits()
 			for _, label := range labels {
 				if !findNamedValue(bits, label) {
 					ctx.EmitDiagnostic(types.DiagDefvalBits,
