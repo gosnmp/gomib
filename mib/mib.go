@@ -136,7 +136,7 @@ const (
 	OctetDecimal = model.OctetDecimal
 	OctetHex     = model.OctetHex
 	OctetOctal   = model.OctetOctal
-	OctetAscii   = model.OctetAscii
+	OctetASCII   = model.OctetASCII
 	OctetUtf8    = model.OctetUtf8
 )
 
@@ -146,6 +146,7 @@ func IsValidOctetStringHint(hint string) bool   { return model.IsValidOctetStrin
 func FormatInteger(hint string, value int64, hexCase HexCase) (string, bool) {
 	return model.FormatInteger(hint, value, hexCase)
 }
+
 func ScaleInteger(hint string, value int64) (float64, bool) { return model.ScaleInteger(hint, value) }
 
 // FormatOctets formats an octet string according to an RFC 2579 display hint.
@@ -165,7 +166,7 @@ type (
 
 const (
 	IndexValueInteger          = model.IndexValueInteger
-	IndexValueIpAddress        = model.IndexValueIpAddress
+	IndexValueIPAddress        = model.IndexValueIPAddress
 	IndexValueOctetString      = model.IndexValueOctetString
 	IndexValueObjectIdentifier = model.IndexValueObjectIdentifier
 )

@@ -69,10 +69,10 @@ func buildSymbolTestMib() *Mib {
 
 	// Capability
 	capNode := makeNode([]uint32{1, 3, 6, 1, 2, 1, 31, 3, 1}, "ifCap")
-	cap := &Capability{entity: entity{name: "ifCap", module: mod, node: capNode, span: Span{Start: 900, End: 1000}}}
-	capNode.setCapability(cap)
-	mod.addCapability(cap)
-	m.addCapability(cap)
+	c := &Capability{entity: entity{name: "ifCap", module: mod, node: capNode, span: Span{Start: 900, End: 1000}}}
+	capNode.setCapability(c)
+	mod.addCapability(c)
+	m.addCapability(c)
 
 	// Plain node (no entity)
 	makeNode([]uint32{1, 3, 6, 1, 2, 1, 1}, "system")

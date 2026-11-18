@@ -361,7 +361,7 @@ func TestCheckIndexMissingConstraintDistinguishesEmptyIntersection(t *testing.T)
 func TestIsLegalIndexBasetype(t *testing.T) {
 	legal := []model.BaseType{
 		model.BaseInteger32, model.BaseUnsigned32, model.BaseGauge32,
-		model.BaseTimeTicks, model.BaseIpAddress, model.BaseOctetString, model.BaseOpaque,
+		model.BaseTimeTicks, model.BaseIPAddress, model.BaseOctetString, model.BaseOpaque,
 		model.BaseBits, model.BaseObjectIdentifier,
 	}
 	for _, b := range legal {
@@ -521,7 +521,7 @@ func TestIndexElementSubIds(t *testing.T) {
 		},
 		{
 			name:   "ip address",
-			entry:  model.IndexEntry{Object: makeTypedObject(model.BaseIpAddress, nil), Encoding: model.IndexEncodingIpAddress},
+			entry:  model.IndexEntry{Object: makeTypedObject(model.BaseIPAddress, nil), Encoding: model.IndexEncodingIPAddress},
 			want:   4,
 			wantOK: true,
 		},
@@ -570,7 +570,7 @@ func TestIndexElementSubIds(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, ok := indexElementSubIds(tt.entry)
+			got, ok := indexElementSubIDs(tt.entry)
 			testutil.Equal(t, tt.wantOK, ok, "ok")
 			testutil.Equal(t, tt.want, got, "sub-id count")
 		})
@@ -1785,5 +1785,5 @@ func TestCheckNotificationReversibility_SMIv1Skipped(t *testing.T) {
 	)
 
 	m := resolveStrict(mod)
-	noDiag(t, m.Diagnostics(), types.DiagNotifNotReversible, types.DiagNotifIdTooLarge)
+	noDiag(t, m.Diagnostics(), types.DiagNotifNotReversible, types.DiagNotifIDTooLarge)
 }

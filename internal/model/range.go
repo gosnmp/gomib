@@ -8,21 +8,21 @@ func BaseConstraint(base BaseType, size bool, span Span) (Range, bool) {
 	if size {
 		return Range{Min: NewUnsignedRangeBound(0), Max: NewUnsignedRangeBound(65535), Span: span}, true
 	}
-	var min, max RangeBound
+	var minRange, maxRange RangeBound
 	switch base {
 	case BaseInteger32:
-		min = NewSignedRangeBound(math.MinInt32)
-		max = NewSignedRangeBound(math.MaxInt32)
+		minRange = NewSignedRangeBound(math.MinInt32)
+		maxRange = NewSignedRangeBound(math.MaxInt32)
 	case BaseUnsigned32, BaseGauge32, BaseTimeTicks, BaseCounter32:
-		min = NewUnsignedRangeBound(0)
-		max = NewUnsignedRangeBound(math.MaxUint32)
+		minRange = NewUnsignedRangeBound(0)
+		maxRange = NewUnsignedRangeBound(math.MaxUint32)
 	case BaseCounter64:
-		min = NewUnsignedRangeBound(0)
-		max = NewUnsignedRangeBound(math.MaxUint64)
+		minRange = NewUnsignedRangeBound(0)
+		maxRange = NewUnsignedRangeBound(math.MaxUint64)
 	default:
 		return Range{}, false
 	}
-	return Range{Min: min, Max: max, Span: span}, true
+	return Range{Min: minRange, Max: maxRange, Span: span}, true
 }
 
 // IntersectRanges intersects child constraints with parent constraints. MIN

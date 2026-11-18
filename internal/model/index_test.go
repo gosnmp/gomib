@@ -13,7 +13,7 @@ func TestIndexValueString(t *testing.T) {
 		want  string
 	}{
 		{"integer", IndexValue{kind: IndexValueInteger, value: uint32(42)}, "42"},
-		{"ip", IndexValue{kind: IndexValueIpAddress, value: [4]byte{192, 168, 1, 1}}, "192.168.1.1"},
+		{"ip", IndexValue{kind: IndexValueIPAddress, value: [4]byte{192, 168, 1, 1}}, "192.168.1.1"},
 		{"printable string", IndexValue{kind: IndexValueOctetString, value: []byte("eth0")}, "eth0"},
 		{"binary string", IndexValue{kind: IndexValueOctetString, value: []byte{0x00, 0xFF}}, "00:FF"},
 		{"oid", IndexValue{kind: IndexValueObjectIdentifier, value: OID{1, 3, 6, 1}}, "1.3.6.1"},
@@ -32,19 +32,19 @@ func TestIndexValueAccessors(t *testing.T) {
 		testutil.True(t, ok, "Integer() ok")
 		testutil.Equal(t, uint32(42), n, "Integer() value")
 
-		_, ok = v.IpAddress()
-		testutil.True(t, !ok, "IpAddress() should be false")
+		_, ok = v.IPAddress()
+		testutil.True(t, !ok, "IPAddress() should be false")
 		_, ok = v.Bytes()
 		testutil.True(t, !ok, "Bytes() should be false")
 		_, ok = v.OID()
 		testutil.True(t, !ok, "OID() should be false")
 	})
 
-	t.Run("IpAddress", func(t *testing.T) {
-		v := IndexValue{kind: IndexValueIpAddress, value: [4]byte{10, 0, 1, 99}}
-		ip, ok := v.IpAddress()
-		testutil.True(t, ok, "IpAddress() ok")
-		testutil.Equal(t, [4]byte{10, 0, 1, 99}, ip, "IpAddress() value")
+	t.Run("IPAddress", func(t *testing.T) {
+		v := IndexValue{kind: IndexValueIPAddress, value: [4]byte{10, 0, 1, 99}}
+		ip, ok := v.IPAddress()
+		testutil.True(t, ok, "IPAddress() ok")
+		testutil.Equal(t, [4]byte{10, 0, 1, 99}, ip, "IPAddress() value")
 		testutil.NotNil(t, v.IP(), "IP() should not be nil")
 	})
 

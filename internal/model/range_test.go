@@ -9,20 +9,20 @@ import (
 	"github.com/golangsnmp/gomib/internal/testutil"
 )
 
-func signedRange(min, max int64) Range {
-	return Range{Min: NewSignedRangeBound(min), Max: NewSignedRangeBound(max)}
+func signedRange(minRange, maxRange int64) Range {
+	return Range{Min: NewSignedRangeBound(minRange), Max: NewSignedRangeBound(maxRange)}
 }
 
-func rawMinRange(raw string, max int64) Range {
-	return Range{Min: NewRawRangeBound(raw), Max: NewSignedRangeBound(max)}
+func rawMinRange(raw string, maxRange int64) Range {
+	return Range{Min: NewRawRangeBound(raw), Max: NewSignedRangeBound(maxRange)}
 }
 
-func rawMaxRange(min int64) Range {
-	return Range{Min: NewSignedRangeBound(min), Max: NewRawRangeBound("vendor-max")}
+func rawMaxRange(minRange int64) Range {
+	return Range{Min: NewSignedRangeBound(minRange), Max: NewRawRangeBound("vendor-max")}
 }
 
-func symbolicRange(min, max RangeBoundKind) Range {
-	return Range{Min: RangeBound{Kind: min}, Max: RangeBound{Kind: max}}
+func symbolicRange(minRange, maxRange RangeBoundKind) Range {
+	return Range{Min: RangeBound{Kind: minRange}, Max: RangeBound{Kind: maxRange}}
 }
 
 func TestIntersectRanges(t *testing.T) {

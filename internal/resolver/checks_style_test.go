@@ -639,7 +639,7 @@ func TestCheckIpAddressDeprecation(t *testing.T) {
 			},
 		)
 		m := resolveStrict(mod)
-		hasDiag(t, m.Diagnostics(), types.DiagIpAddressInSyntax)
+		hasDiag(t, m.Diagnostics(), types.DiagIPAddressInSyntax)
 	})
 
 	t.Run("IpAddress in SMIv1 does not emit diagnostic", func(t *testing.T) {
@@ -658,7 +658,7 @@ func TestCheckIpAddressDeprecation(t *testing.T) {
 			},
 		)
 		m := resolveStrict(mod)
-		noDiag(t, m.Diagnostics(), types.DiagIpAddressInSyntax)
+		noDiag(t, m.Diagnostics(), types.DiagIPAddressInSyntax)
 	})
 }
 

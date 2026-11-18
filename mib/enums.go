@@ -110,7 +110,7 @@ const (
 	BaseCounter64        = types.BaseCounter64
 	BaseGauge32          = types.BaseGauge32
 	BaseTimeTicks        = types.BaseTimeTicks
-	BaseIpAddress        = types.BaseIpAddress
+	BaseIPAddress        = types.BaseIPAddress
 	BaseOctetString      = types.BaseOctetString
 	BaseObjectIdentifier = types.BaseObjectIdentifier
 	BaseBits             = types.BaseBits
@@ -146,5 +146,5 @@ const (
 	IndexEncodingFixedString    = types.IndexEncodingFixedString
 	IndexEncodingLengthPrefixed = types.IndexEncodingLengthPrefixed
 	IndexEncodingImplied        = types.IndexEncodingImplied
-	IndexEncodingIpAddress      = types.IndexEncodingIpAddress
+	IndexEncodingIPAddress      = types.IndexEncodingIPAddress
 )

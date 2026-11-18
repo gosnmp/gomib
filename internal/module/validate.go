@@ -298,7 +298,7 @@ func validateDate(ctx *validateContext, date string, span types.Span, now time.T
 	month := digit(date, offset)*10 + digit(date, offset+1)
 	day := digit(date, offset+2)*10 + digit(date, offset+3)
 	hour := digit(date, offset+4)*10 + digit(date, offset+5)
-	min := digit(date, offset+6)*10 + digit(date, offset+7)
+	minute := digit(date, offset+6)*10 + digit(date, offset+7)
 
 	// Validate ranges.
 	if month < 1 || month > 12 {
@@ -316,14 +316,14 @@ func validateDate(ctx *validateContext, date string, span types.Span, now time.T
 			fmt.Sprintf("date %q has illegal hour %02d", date, hour))
 		return time.Time{}, false
 	}
-	if min > 59 {
+	if minute > 59 {
 		ctx.emitDiagnostic(types.DiagDateMinutes, span,
-			fmt.Sprintf("date %q has illegal minutes %02d", date, min))
+			fmt.Sprintf("date %q has illegal minutes %02d", date, minute))
 		return time.Time{}, false
 	}
 
 	// Check calendar validity (e.g. Feb 30 is not valid).
-	t := time.Date(year, time.Month(month), day, hour, min, 0, 0, time.UTC)
+	t := time.Date(year, time.Month(month), day, hour, minute, 0, 0, time.UTC)
 	if t.Month() != time.Month(month) || t.Day() != day {
 		ctx.emitDiagnostic(types.DiagDateValue, span,
 			fmt.Sprintf("date %q is not a valid calendar date", date))

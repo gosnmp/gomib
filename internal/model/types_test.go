@@ -283,8 +283,8 @@ func TestComplianceModulesDeepClone(t *testing.T) {
 }
 
 func TestCapabilitySupportsDeepClone(t *testing.T) {
-	cap := NewCapability("testCap")
-	cap.setSupports([]CapabilitiesModule{
+	c := NewCapability("testCap")
+	c.setSupports([]CapabilitiesModule{
 		{
 			ModuleName: "IF-MIB",
 			Includes:   []NameRef{{Name: "ifGeneralGroup"}},
@@ -310,37 +310,37 @@ func TestCapabilitySupportsDeepClone(t *testing.T) {
 		{
 			"Includes",
 			func(m []CapabilitiesModule) { m[0].Includes[0].Name = "X" },
-			func() bool { return cap.supports[0].Includes[0].Name == "X" },
+			func() bool { return c.supports[0].Includes[0].Name == "X" },
 		},
 		{
 			"ObjectVariations",
 			func(m []CapabilitiesModule) { m[0].ObjectVariations[0].Object = "X" },
-			func() bool { return cap.supports[0].ObjectVariations[0].Object == "X" },
+			func() bool { return c.supports[0].ObjectVariations[0].Object == "X" },
 		},
 		{
 			"CreationRequires",
 			func(m []CapabilitiesModule) { m[0].ObjectVariations[0].CreationRequires[0].Name = "X" },
-			func() bool { return cap.supports[0].ObjectVariations[0].CreationRequires[0].Name == "X" },
+			func() bool { return c.supports[0].ObjectVariations[0].CreationRequires[0].Name == "X" },
 		},
 		{
 			"Syntax",
 			func(m []CapabilitiesModule) { m[0].ObjectVariations[0].Syntax.Enums[0].Label = "X" },
-			func() bool { return cap.supports[0].ObjectVariations[0].Syntax.Enums[0].Label == "X" },
+			func() bool { return c.supports[0].ObjectVariations[0].Syntax.Enums[0].Label == "X" },
 		},
 		{
 			"WriteSyntax",
 			func(m []CapabilitiesModule) { m[0].ObjectVariations[0].WriteSyntax.Bits[0].Label = "X" },
-			func() bool { return cap.supports[0].ObjectVariations[0].WriteSyntax.Bits[0].Label == "X" },
+			func() bool { return c.supports[0].ObjectVariations[0].WriteSyntax.Bits[0].Label == "X" },
 		},
 		{
 			"NotificationVariations",
 			func(m []CapabilitiesModule) { m[0].NotificationVariations[0].Notification = "X" },
-			func() bool { return cap.supports[0].NotificationVariations[0].Notification == "X" },
+			func() bool { return c.supports[0].NotificationVariations[0].Notification == "X" },
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := cap.Supports()
+			got := c.Supports()
 			tt.mutate(got)
 			testutil.False(t, tt.wasMutated(), "mutating Supports()[]. should not affect internal state")
 		})

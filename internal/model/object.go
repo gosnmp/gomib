@@ -167,7 +167,7 @@ func (o *Object) Table() *Object {
 	if o.node == nil {
 		return nil
 	}
-	switch o.node.kind {
+	switch o.node.kind { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 	case KindRow:
 		if o.node.parent != nil && o.node.parent.obj != nil {
 			return o.node.parent.obj

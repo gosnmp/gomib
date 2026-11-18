@@ -276,7 +276,7 @@ func exportBaseType(b mib.BaseType) string {
 		return "Gauge32"
 	case mib.BaseTimeTicks:
 		return "TimeTicks"
-	case mib.BaseIpAddress:
+	case mib.BaseIPAddress:
 		return "IpAddress"
 	case mib.BaseOctetString:
 		return "OctetString"
@@ -970,7 +970,7 @@ func buildExportObject(m *mib.Mib, obj *mib.Object) ExportObject {
 		o.Augments = &ref
 	}
 
-	switch obj.Kind() {
+	switch obj.Kind() { //nolint:exhaustive // TOOD: Evalute missing cases/default.
 	case mib.KindTable:
 		o.Syntax = nil
 		o.DefaultValue = nil
@@ -1167,30 +1167,30 @@ func buildExportCompliance(comp *mib.Compliance, m *mib.Mib) ExportCompliance {
 	return c
 }
 
-func buildExportCapability(cap *mib.Capability, m *mib.Mib) ExportCapability {
+func buildExportCapability(mibCap *mib.Capability, m *mib.Mib) ExportCapability {
 	modName := ""
-	if cap.Module() != nil {
-		modName = cap.Module().Name()
+	if mibCap.Module() != nil {
+		modName = mibCap.Module().Name()
 	}
 
 	c := ExportCapability{
-		Key:         exportKey(modName, cap.Name()),
-		OID:         cap.OID().String(),
-		Name:        cap.Name(),
+		Key:         exportKey(modName, mibCap.Name()),
+		OID:         mibCap.OID().String(),
+		Name:        mibCap.Name(),
 		Module:      modName,
-		Status:      exportStatus(cap.Status()),
-		Description: strPtr(cap.Description()),
+		Status:      exportStatus(mibCap.Status()),
+		Description: strPtr(mibCap.Description()),
 		Supports:    make([]ExportCapabilitySupports, 0),
 	}
 
-	if pr := cap.ProductRelease(); pr != "" {
+	if pr := mibCap.ProductRelease(); pr != "" {
 		c.ProductRelease = &pr
 	}
-	if ref := cap.Reference(); ref != "" {
+	if ref := mibCap.Reference(); ref != "" {
 		c.Reference = &ref
 	}
 
-	for _, s := range cap.Supports() {
+	for _, s := range mibCap.Supports() {
 		vs := ExportCapabilitySupports{
 			Module:                 s.ModuleName,
 			Includes:               make([]ExportObjRef, 0),

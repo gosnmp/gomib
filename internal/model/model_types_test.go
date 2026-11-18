@@ -197,32 +197,32 @@ func TestCapabilityAccessors(t *testing.T) {
 
 	mod := NewModule("TEST-MIB")
 
-	cap := NewCapability("testCap")
-	cap.setNode(nd)
-	cap.setModule(mod)
-	cap.setStatus(StatusCurrent)
-	cap.setDescription("Test capabilities")
-	cap.setReference("RFC 9999")
-	cap.setProductRelease("Agent 1.0")
-	cap.setSupports([]CapabilitiesModule{
+	testCap := NewCapability("testCap")
+	testCap.setNode(nd)
+	testCap.setModule(mod)
+	testCap.setStatus(StatusCurrent)
+	testCap.setDescription("Test capabilities")
+	testCap.setReference("RFC 9999")
+	testCap.setProductRelease("Agent 1.0")
+	testCap.setSupports([]CapabilitiesModule{
 		{ModuleName: "IF-MIB", Includes: []NameRef{{Name: "ifGroup"}}},
 	})
 
-	testutil.Equal(t, "testCap", cap.Name(), "Name()")
-	testutil.Equal(t, nd, cap.Node(), "Node() returned wrong node")
-	testutil.Equal(t, mod, cap.Module(), "Module() returned wrong module")
-	testutil.Equal(t, StatusCurrent, cap.Status(), "Status()")
-	testutil.Equal(t, "Test capabilities", cap.Description(), "Description()")
-	testutil.Equal(t, "RFC 9999", cap.Reference(), "Reference()")
-	testutil.Equal(t, "Agent 1.0", cap.ProductRelease(), "ProductRelease()")
-	supports := cap.Supports()
+	testutil.Equal(t, "testCap", testCap.Name(), "Name()")
+	testutil.Equal(t, nd, testCap.Node(), "Node() returned wrong node")
+	testutil.Equal(t, mod, testCap.Module(), "Module() returned wrong module")
+	testutil.Equal(t, StatusCurrent, testCap.Status(), "Status()")
+	testutil.Equal(t, "Test capabilities", testCap.Description(), "Description()")
+	testutil.Equal(t, "RFC 9999", testCap.Reference(), "Reference()")
+	testutil.Equal(t, "Agent 1.0", testCap.ProductRelease(), "ProductRelease()")
+	supports := testCap.Supports()
 	testutil.Len(t, supports, 1, "Supports() len")
 	testutil.Equal(t, "IF-MIB", supports[0].ModuleName, "Supports()[0].ModuleName")
 }
 
 func TestCapabilityOIDNilNode(t *testing.T) {
-	cap := NewCapability("noNode")
-	testutil.Nil(t, cap.OID(), "OID()")
+	testCap := NewCapability("noNode")
+	testutil.Nil(t, testCap.OID(), "OID()")
 }
 
 // --- Module ---
@@ -273,8 +273,8 @@ func TestModuleEntityLookups(t *testing.T) {
 	comp := &Compliance{entity: entity{name: "testComp"}}
 	mod.addCompliance(comp)
 
-	cap := &Capability{entity: entity{name: "testCap"}}
-	mod.addCapability(cap)
+	testCap := &Capability{entity: entity{name: "testCap"}}
+	mod.addCapability(testCap)
 
 	nd := &Node{name: "testNode"}
 	mod.addNode(nd)
@@ -284,7 +284,7 @@ func TestModuleEntityLookups(t *testing.T) {
 	testutil.Equal(t, notif, mod.Notification("testNotif"), "Notification() lookup failed")
 	testutil.Equal(t, grp, mod.Group("testGroup"), "Group() lookup failed")
 	testutil.Equal(t, comp, mod.Compliance("testComp"), "Compliance() lookup failed")
-	testutil.Equal(t, cap, mod.Capability("testCap"), "Capability() lookup failed")
+	testutil.Equal(t, testCap, mod.Capability("testCap"), "Capability() lookup failed")
 	testutil.Equal(t, nd, mod.Node("testNode"), "Node() lookup failed")
 
 	// Not found
