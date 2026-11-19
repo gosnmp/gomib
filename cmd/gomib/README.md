@@ -117,7 +117,7 @@ gomib lint --summary IF-MIB
 gomib lint --list-codes
 ```
 
-Flags: `--level N` (report up to severity N, 0-6, higher is more verbose), `--fail-on N`, `--ignore CODE` (repeatable, supports globs), `--only CODE`, `--format` (text/json/sarif/compact), `--group-by` (module/code/severity), `--summary`, `--quiet`, `--list-codes` (show all diagnostic codes).
+Flags: `--level N` (report up to severity N, 0-6, higher is more verbose), `--fail-on N`, `--ignore CODE` (repeatable, supports globs), `--only CODE`, `--format` (text/json/sarif/compact), `--group-by` (module/code/severity), `--summary`, `--quiet` (suppress the report on stdout), `--list-codes` (show all diagnostic codes).
 
 Severity ordering matches gomib's libsmi-style scale, where lower numbers are more severe:
 
@@ -129,7 +129,7 @@ Severity ordering matches gomib's libsmi-style scale, where lower numbers are mo
 - `5` warning
 - `6` info
 
-This is separate from resolver strictness. `--strict` and `--permissive` control fallback behavior for loading and query commands; `lint --level` and `lint --fail-on` control which diagnostics are shown and which cause a non-zero exit.
+`lint --level` selects diagnostics for the report. Among those findings, `--fail-on` selects the severities that cause exit 1.
 
 ### find
 
@@ -185,7 +185,13 @@ gomib version
 ## Exit Codes
 
 - 0 - success (clean load, match found, no issues)
-- 1 - negative result (issues/violations found, no match)
+- 1 - negative result (issues/violations found, no match). `list` also exits 1 if it cannot find a usable source, list modules, or produce the requested output format.
 - 2 - operational error (load failure, parse error)
 
-Output-only commands (dump, list, paths) use 0/1 only.
+For commands with resolver flags, normal and strict modes treat severe and fatal diagnostics as load failures. Permissive resolution enables all resolver fallbacks and treats only fatal diagnostics as load failures. `get`, `find`, and `inspect` default to permissive mode. `load`, `dump`, `normalize`, and `trace` default to normal mode.
+
+For `load` and `dump`, `--report` controls which diagnostics appear in the output. The exit status is independent of that choice. For example, given a module with a severe diagnostic, `dump --permissive` succeeds and `load --permissive` exits 1 to indicate a finding. Adding `--report silent` preserves both exit statuses.
+
+A missing requested module or other loader error takes precedence over a match, a miss, or a lint finding. The command writes the error to stderr and exits 2.
+
+When the loader returns a partial model, commands produce their usual output from the available data. For example, `gomib get -m MISSING-MIB iso` can print the embedded `iso` node and still exit 2. `normalize` writes only the requested modules it found, in request order. `lint` reports diagnostics from the available modules, and loader errors go to stderr even with `--quiet`. When loading fails before a model is available, stdout is empty.

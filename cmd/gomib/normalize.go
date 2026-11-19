@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gosnmp/gomib/mib"
 	"github.com/gosnmp/gomib/smiwrite"
 )
 
@@ -22,7 +23,7 @@ Options:
   --no-descriptions        Omit DESCRIPTION clauses
   --no-sequences           Omit reconstructed SEQUENCE types
   --strict                 Resolver strictness: strict (tier-1 only)
-  --permissive             Resolver strictness: permissive (tier-1/2/3)
+  --permissive             Use all resolver fallbacks and tolerate nonfatal diagnostics
   -h, --help               Show help
 
 Examples:
@@ -52,29 +53,33 @@ func (c *cli) cmdNormalize(args []string) int {
 		return exitOK
 	}
 
-	if code, failed := c.validateStrictnessFlags(*strict, *permissive); failed {
-		return code
-	}
-
-	modules := fs.Args()
-	loadAll := len(modules) == 0
-
-	var loadModules []string
-	if !loadAll {
-		loadModules = modules
-	}
-	m, loadErr := c.loadMibWithOpts(loadModules, strictnessOpts(*strict, *permissive)...)
-	if loadErr != nil && m == nil {
-		c.printError("failed to load: %v", loadErr)
+	mode, ok := c.resolverMode(*strict, *permissive, mib.ResolverNormal)
+	if !ok {
 		return exitError
 	}
 
-	if loadAll {
+	requested := fs.Args()
+	m, loadStatus := c.loadMIB(requested, mode, mib.ReportingSilent)
+	if m == nil {
+		return loadStatus
+	}
+
+	var modules []string
+	if len(requested) == 0 {
 		for _, mod := range m.Modules() {
 			if mod.IsBase() {
 				continue
 			}
 			modules = append(modules, mod.Name())
+		}
+	} else {
+		for _, name := range requested {
+			if m.Module(name) != nil {
+				modules = append(modules, name)
+			}
+		}
+		if len(modules) == 0 {
+			return loadStatus
 		}
 	}
 
@@ -119,5 +124,5 @@ func (c *cli) cmdNormalize(args []string) int {
 		}
 	}
 
-	return exitOK
+	return loadStatus
 }

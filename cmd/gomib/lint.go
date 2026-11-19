@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gosnmp/gomib"
 	"github.com/gosnmp/gomib/internal/types"
 	"github.com/gosnmp/gomib/mib"
 )
@@ -28,7 +27,7 @@ Options:
   --format FMT    Output format: text, json, sarif, compact (default: text)
   --group-by KEY  Group output: module, code, severity (default: none)
   --summary       Show summary only (counts by severity)
-  --quiet         No output, exit code only
+  --quiet         Suppress the lint report
   --list-codes    List all diagnostic codes and exit
   -h, --help      Show help
 
@@ -126,7 +125,7 @@ func (c *cli) cmdLint(args []string) int {
 	fs.StringVar(&cfg.format, "format", cfg.format, "output format")
 	fs.StringVar(&cfg.groupBy, "group-by", cfg.groupBy, "grouping key")
 	fs.BoolVar(&cfg.summary, "summary", false, "summary only")
-	fs.BoolVar(&cfg.quiet, "quiet", false, "no output")
+	fs.BoolVar(&cfg.quiet, "quiet", false, "suppress the lint report")
 	listCodes := fs.Bool("list-codes", false, "list all diagnostic codes")
 	help := addHelpFlag(fs)
 
@@ -164,7 +163,17 @@ func (c *cli) cmdLint(args []string) int {
 		return exitError
 	}
 
-	result := c.runLint(modules, &cfg)
+	// Collect diagnostics at every reporting level. Apply the lint filters below.
+	diagCfg := mib.DiagnosticConfig{
+		Reporting: mib.ReportingVerbose,
+		FailAt:    mib.SeverityFatal,
+		Ignore:    cfg.ignore,
+	}
+	m, loadStatus := c.loadMIBWithConfig(modules, mib.ResolverNormal, diagCfg)
+	if m == nil {
+		return loadStatus
+	}
+	result := lintModel(m, &cfg)
 
 	if !cfg.quiet {
 		var err error
@@ -184,41 +193,17 @@ func (c *cli) cmdLint(args []string) int {
 		}
 	}
 
-	return result.ExitCode
+	return max(loadStatus, result.ExitCode)
 }
 
-func (c *cli) runLint(modules []string, cfg *lintConfig) *lintResult {
-	// Use strict mode for collection so all diagnostics are gathered.
-	// The lint command filters by --level itself (smilint-style: higher = more verbose).
-	diagCfg := mib.DiagnosticConfig{
-		Reporting: mib.ReportingVerbose,
-		FailAt:    mib.SeverityFatal, // We handle failure ourselves
-		Ignore:    cfg.ignore,
-	}
-
-	m, err := c.loadMibWithOpts(modules, gomib.WithDiagnosticConfig(diagCfg))
-
+func lintModel(m *mib.Mib, cfg *lintConfig) *lintResult {
 	result := &lintResult{
 		Summary: lintSummary{
+			Modules:    len(m.Modules()),
 			BySeverity: make(map[string]int),
 			ByCode:     make(map[string]int),
 		},
 	}
-
-	if err != nil {
-		result.Diagnostics = append(result.Diagnostics, lintDiagnostic{
-			Severity:    mib.SeverityFatal.String(),
-			SeverityNum: mib.SeverityFatal,
-			Code:        types.DiagParseError,
-			Message:     err.Error(),
-		})
-		result.Summary.Total = 1
-		result.Summary.BySeverity["fatal"] = 1
-		result.ExitCode = 2
-		return result
-	}
-
-	result.Summary.Modules = len(m.Modules())
 
 	for _, d := range m.Diagnostics() {
 		if d.Severity > cfg.level {
@@ -244,7 +229,7 @@ func (c *cli) runLint(modules []string, cfg *lintConfig) *lintResult {
 		result.Summary.ByCode[d.Code]++
 
 		if d.Severity <= cfg.failOn {
-			result.ExitCode = 1
+			result.ExitCode = exitIssue
 		}
 	}
 
@@ -543,7 +528,7 @@ func buildSARIFRules(result *lintResult) []sarifRule {
 }
 
 func buildSARIFResults(result *lintResult) []sarifResult {
-	var results []sarifResult
+	results := make([]sarifResult, 0, len(result.Diagnostics))
 
 	for _, d := range result.Diagnostics {
 		r := sarifResult{

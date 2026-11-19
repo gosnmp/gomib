@@ -72,7 +72,7 @@ func TestExportTypeBackedIndexUsesEffectiveConstraints(t *testing.T) {
 
 func TestScopedExportRefsDoNotFallBackGlobally(t *testing.T) {
 	m := loadScopedExportTestMIB(t)
-	export := buildExportPayload(m, "normal")
+	export := buildExportPayload(m, "normal", m.Diagnostics())
 
 	var compliance *ExportCompliance
 	for i := range export.Compliances {

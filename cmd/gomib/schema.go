@@ -628,7 +628,7 @@ func exporterInfo() Exporter {
 	}
 }
 
-func buildExportPayload(m *mib.Mib, strictness string) *ExportPayload {
+func buildExportPayload(m *mib.Mib, strictness string, diagnostics []mib.Diagnostic) *ExportPayload {
 	export := &ExportPayload{
 		SchemaVersion: 1,
 		ExportKind:    "resolved-mib",
@@ -766,7 +766,6 @@ func buildExportPayload(m *mib.Mib, strictness string) *ExportPayload {
 	})
 
 	// Diagnostics - sorted canonically
-	diagnostics := m.Diagnostics()
 	for i := range diagnostics {
 		export.Diagnostics = append(export.Diagnostics, buildExportDiagnostic(&diagnostics[i]))
 	}

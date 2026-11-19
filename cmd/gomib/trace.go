@@ -20,7 +20,7 @@ resolution issues like missing INDEX references or duplicate definitions.
 Options:
   -m, --module MODULE   Module to load (repeatable, default: all)
   --strict              Resolver strictness: strict (tier-1 only)
-  --permissive          Resolver strictness: permissive (tier-1/2/3)
+  --permissive          Use all resolver fallbacks and tolerate nonfatal diagnostics
   -h, --help            Show help
 
 Output shows:
@@ -53,8 +53,9 @@ func (c *cli) cmdTrace(args []string) int {
 		return exitOK
 	}
 
-	if code, failed := c.validateStrictnessFlags(*strict, *permissive); failed {
-		return code
+	mode, ok := c.resolverMode(*strict, *permissive, mib.ResolverNormal)
+	if !ok {
+		return exitError
 	}
 
 	positional := fs.Args()
@@ -70,22 +71,16 @@ func (c *cli) cmdTrace(args []string) int {
 	}
 	symbol := positional[0]
 
-	var mods []string
-	if len(*modules) > 0 {
-		mods = *modules
-	}
-
 	var loadMode string
-	if len(mods) == 0 {
+	if len(*modules) == 0 {
 		loadMode = "Load - all modules from search path"
 	} else {
-		loadMode = fmt.Sprintf("Load WithModules(%v)", mods)
+		loadMode = fmt.Sprintf("Load WithModules(%v)", *modules)
 	}
 
-	m, err := c.loadMibWithOpts(mods, strictnessOpts(*strict, *permissive)...)
-	if err != nil && m == nil {
-		c.printError("failed to load: %v", err)
-		return exitError
+	m, loadStatus := c.loadMIB(*modules, mode, mib.ReportingSilent)
+	if m == nil {
+		return loadStatus
 	}
 
 	fmt.Fprintf(c.stdout, "Load mode: %s\n", loadMode)
@@ -94,7 +89,7 @@ func (c *cli) cmdTrace(args []string) int {
 
 	c.traceSymbol(m, symbol)
 
-	return exitOK
+	return loadStatus
 }
 
 func (c *cli) traceSymbol(m *mib.Mib, symbol string) {

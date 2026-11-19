@@ -32,7 +32,7 @@ Options:
   --full                Show full descriptions in text output
   --format FMT          Output format: text, json (default: text)
   --strict              Resolver strictness: strict (tier-1 only)
-  --permissive          Resolver strictness: permissive (tier-1/2/3)
+  --permissive          Use all resolver fallbacks and tolerate nonfatal diagnostics
   -h, --help            Show help
 
 Examples:
@@ -95,8 +95,9 @@ func (c *cli) cmdGet(args []string) int {
 		return exitOK
 	}
 
-	if code, failed := c.validateStrictnessFlags(*strict, *permissive); failed {
-		return code
+	mode, ok := c.resolverMode(*strict, *permissive, mib.ResolverPermissive)
+	if !ok {
+		return exitError
 	}
 
 	positional := fs.Args()
@@ -112,27 +113,15 @@ func (c *cli) cmdGet(args []string) int {
 	}
 	query := positional[0]
 
-	// Default to permissive+silent for query commands
-	opts := strictnessOpts(*strict, *permissive)
-	if len(opts) == 0 {
-		opts = permissiveSilentOpts()
-	}
-
-	var mods []string
-	if len(*modules) > 0 {
-		mods = *modules
-	}
-
-	m, err := c.loadMibWithOpts(mods, opts...)
-	if err != nil && m == nil {
-		c.printError("failed to load: %v", err)
-		return exitError
+	m, loadStatus := c.loadMIB(*modules, mode, mib.ReportingSilent)
+	if m == nil {
+		return loadStatus
 	}
 
 	node := m.Resolve(query)
 	if node == nil {
 		c.printError("not found: %s", query)
-		return exitIssue
+		return max(loadStatus, exitIssue)
 	}
 
 	descLimit := 200
@@ -142,14 +131,14 @@ func (c *cli) cmdGet(args []string) int {
 
 	switch *format {
 	case formatJSON:
-		return c.printNodeJSON(node, *tree || maxDepth.set, maxDepth)
+		return max(loadStatus, c.printNodeJSON(node, *tree || maxDepth.set, maxDepth))
 	case formatText, "":
 		if *tree || maxDepth.set {
 			c.printNodeTree(node, maxDepth)
 		} else {
 			c.printNode(node, descLimit)
 		}
-		return exitOK
+		return loadStatus
 	default:
 		c.printError("unknown format: %s", *format)
 		return exitError

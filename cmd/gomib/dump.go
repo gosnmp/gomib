@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"strings"
+
+	"github.com/gosnmp/gomib/mib"
 )
 
 const dumpUsage = `gomib dump - Export resolved MIB data as canonical JSON
@@ -19,7 +21,7 @@ Options:
   --no-descriptions      Omit description fields
   --report LEVEL         Diagnostic reporting: silent|quiet|default|verbose
   --strict               Resolver strictness: strict (tier-1 only)
-  --permissive           Resolver strictness: permissive (tier-1/2/3)
+  --permissive           Use all resolver fallbacks and tolerate nonfatal diagnostics
   -h, --help             Show help
 
 Examples:
@@ -49,51 +51,29 @@ func (c *cli) cmdDump(args []string) int {
 		return exitOK
 	}
 
-	if code, failed := c.validateStrictnessFlags(*strict, *permissive); failed {
-		return code
-	}
-
-	modules := fs.Args()
-	if len(modules) == 0 {
-		modules = nil
-	}
-
-	opts := strictnessOpts(*strict, *permissive)
-	reportOption, ok := c.reportOpt(*report)
+	mode, ok := c.resolverMode(*strict, *permissive, mib.ResolverNormal)
 	if !ok {
 		return exitError
 	}
-	opts = append(opts, reportOption)
 
-	m, err := c.loadMibWithOpts(modules, opts...)
-	if err != nil && m == nil {
-		c.printError("failed to load: %v", err)
+	level, ok := c.reportLevel(*report)
+	if !ok {
 		return exitError
 	}
-
-	// Print diagnostics to stderr
-	diags := m.Diagnostics()
-	if len(diags) > 0 {
-		fmt.Fprintln(c.stderr)
-		fmt.Fprintln(c.stderr, "Diagnostics:")
-		for i := range diags {
-			c.printDiagnostic(&diags[i])
-		}
+	m, loadStatus := c.loadMIB(fs.Args(), mode, level)
+	if m == nil {
+		return loadStatus
 	}
 
-	strictnessName := "normal"
-	if *strict {
-		strictnessName = "strict"
-	} else if *permissive {
-		strictnessName = "permissive"
-	}
-	export := buildExportPayload(m, strictnessName)
+	diags := reportedDiagnostics(m, level)
+	c.printDiagnostics(diags)
+	export := buildExportPayload(m, mode.String(), diags)
 
 	if *oidFilter != "" {
 		node := m.Resolve(*oidFilter)
 		if node == nil {
 			c.printError("OID not found: %s", *oidFilter)
-			return exitIssue
+			return max(loadStatus, exitIssue)
 		}
 		filterByOID(export, node.OID().String())
 	}
@@ -103,10 +83,10 @@ func (c *cli) cmdDump(args []string) int {
 	}
 
 	if err := writeJSON(c.stdout, export, !*compact); err != nil {
-		c.printError("failed to marshal JSON: %v", err)
-		return exitIssue
+		c.printError("failed to write JSON: %v", err)
+		return exitError
 	}
-	return exitOK
+	return loadStatus
 }
 
 func filterByOID(export *ExportPayload, prefix string) {

@@ -471,11 +471,11 @@ gomib.WithDiagnosticConfig(mib.DiagnosticConfig{
 })
 ```
 
-CLI equivalents follow the same split:
+The CLI combines resolver and failure settings into modes.
 
-- `gomib load --strict` and `gomib load --permissive` change resolver behavior.
-- `gomib load --report silent|quiet|default|verbose` changes diagnostic output.
-- `gomib get` and `gomib find` default to permissive resolution with silent reporting.
+- Normal and strict modes fail loading on severe or fatal diagnostics. `--permissive` enables all resolver fallbacks and sets the failure threshold to fatal.
+- `--report silent|quiet|default|verbose` controls diagnostic output for `load` and `dump`. All reporting levels use the same exit policy.
+- `get`, `find`, and `inspect` default to permissive mode. `inspect` collects verbose diagnostics for the selected symbol.
 - `gomib lint` is separate from resolver strictness and filters diagnostics by severity.
 
 ## Syntax and Tokenization

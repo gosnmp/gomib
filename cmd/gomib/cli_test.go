@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/gosnmp/gomib/internal/types"
 	"github.com/gosnmp/gomib/mib"
 )
 
@@ -73,6 +75,176 @@ func TestLoadWithoutModulesLoadsAll(t *testing.T) {
 	}
 	if !strings.Contains(stdout, "Loaded ") || !strings.Contains(stdout, "1 objects, 1 notifications") {
 		t.Fatalf("expected load output to show successful all-module load, got %q", stdout)
+	}
+}
+
+func TestMissingRequestedModule(t *testing.T) {
+	dir := writeTestMIB(t)
+	tests := []struct {
+		args       string
+		wantOutput string
+	}{
+		{"load TEST-MIB MISSING-MIB", "1 objects, 1 notifications"},
+		{"get --format json -m MISSING-MIB iso", `"name": "iso"`},
+		{"get -m MISSING-MIB unknown", ""},
+		{"find --count -m MISSING-MIB iso", "1\n"},
+		{"find --count -m MISSING-MIB unknown", "0\n"},
+		{"inspect -m TEST-MIB -m MISSING-MIB testScalar", "testScalar"},
+		{"trace -m TEST-MIB -m MISSING-MIB testScalar", "Object attached: true"},
+		{"dump --report silent --compact TEST-MIB MISSING-MIB", `"testScalar"`},
+		{"dump -o unknown MISSING-MIB", ""},
+		{"normalize MISSING-MIB TEST-MIB", "TEST-MIB DEFINITIONS"},
+		{"normalize MISSING-MIB", ""},
+		{"lint --quiet MISSING-MIB", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.args, func(t *testing.T) {
+			args := append([]string{"-p", dir}, strings.Fields(tt.args)...)
+			code, stdout, stderr := runCLI(t, args...)
+			if code != exitError || !strings.Contains(stderr, "requested modules not found: MISSING-MIB") {
+				t.Fatalf("exit %d, stderr %q", code, stderr)
+			}
+			if tt.wantOutput == "" && stdout != "" || !strings.Contains(stdout, tt.wantOutput) {
+				t.Errorf("expected output %q, got %q", tt.wantOutput, stdout)
+			}
+		})
+	}
+}
+
+func TestNormalizePartialLoadToDir(t *testing.T) {
+	dir := writeTestMIB(t)
+	outDir := t.TempDir()
+	missingPath := filepath.Join(outDir, "MISSING-MIB")
+	if err := os.WriteFile(missingPath, []byte("existing file"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	code, _, stderr := runCLI(t, "-p", dir, "normalize", "-o", outDir, "MISSING-MIB", "TEST-MIB")
+	if code != exitError || !strings.Contains(stderr, "requested modules not found: MISSING-MIB") {
+		t.Fatalf("exit %d, stderr %q", code, stderr)
+	}
+	got, err := os.ReadFile(missingPath)
+	if err != nil || string(got) != "existing file" {
+		t.Fatalf("missing module output file: %q, %v", got, err)
+	}
+	got, err = os.ReadFile(filepath.Join(outDir, "TEST-MIB"))
+	if err != nil || !strings.Contains(string(got), "TEST-MIB DEFINITIONS") {
+		t.Fatalf("loaded module output file: %q, %v", got, err)
+	}
+}
+
+// An OBJECT-TYPE ending in subidentifier zero produces a severe diagnostic.
+func writeSevereTestMIB(t *testing.T) string {
+	t.Helper()
+	source := strings.Replace(testCLIMIB, "::= { testMib 1 }", "::= { testMib 0 }", 1)
+	return writeTestMIBSource(t, source)
+}
+
+func TestDumpReportLevel(t *testing.T) {
+	dir := writeSevereTestMIB(t)
+	for _, tt := range []struct {
+		name     string
+		flags    []string
+		missing  bool
+		wantCode int
+	}{
+		{"normal", nil, false, exitError},
+		{"strict", []string{"--strict"}, false, exitError},
+		{"permissive", []string{"--permissive"}, false, exitOK},
+		{"permissive-missing", []string{"--permissive"}, true, exitError},
+	} {
+		for _, level := range []string{"silent", "quiet", "default", "verbose"} {
+			t.Run(tt.name+"/"+level, func(t *testing.T) {
+				args := []string{"-p", dir, "dump", "--report", level}
+				args = append(args, tt.flags...)
+				args = append(args, "TEST-MIB")
+				if tt.missing {
+					args = append(args, "MISSING-MIB")
+				}
+				code, stdout, stderr := runCLI(t, args...)
+				wantThreshold := tt.wantCode == exitError && !tt.missing
+				if code != tt.wantCode || strings.Contains(stderr, "diagnostic threshold exceeded") != wantThreshold ||
+					strings.Contains(stderr, "requested modules not found: MISSING-MIB") != tt.missing {
+					t.Fatalf("exit %d, stderr %q", code, stderr)
+				}
+				var export ExportPayload
+				if err := json.Unmarshal([]byte(stdout), &export); err != nil {
+					t.Fatal(err)
+				}
+				if len(export.Objects) != 1 || export.Objects[0].Name != "testScalar" {
+					t.Fatalf("exported objects: %v", export.Objects)
+				}
+				hasDiagnostic := slices.ContainsFunc(export.Diagnostics, func(d ExportDiagnostic) bool {
+					return d.Code == types.DiagLastSubidZero
+				})
+				wantDiagnostic := level != "silent"
+				if hasDiagnostic != wantDiagnostic || strings.Contains(stderr, "[last-subid-zero]") != wantDiagnostic {
+					t.Errorf("diagnostics %v, stderr %q", export.Diagnostics, stderr)
+				}
+			})
+		}
+	}
+}
+
+func TestLoadAndQueryModes(t *testing.T) {
+	dir := writeSevereTestMIB(t)
+	for _, tt := range []struct {
+		args     string
+		wantCode int
+	}{
+		{"load --permissive TEST-MIB", exitIssue},
+		{"load --permissive --report silent TEST-MIB", exitIssue},
+		{"load --report silent TEST-MIB", exitError},
+		{"inspect -m TEST-MIB testScalar", exitOK},
+		{"inspect --strict -m TEST-MIB testScalar", exitError},
+		{"inspect --permissive -m TEST-MIB testScalar", exitOK},
+		{"get -m TEST-MIB testScalar", exitOK},
+		{"find -m TEST-MIB testScalar", exitOK},
+		{"trace --permissive -m TEST-MIB testScalar", exitOK},
+		{"normalize --permissive TEST-MIB", exitOK},
+	} {
+		t.Run(tt.args, func(t *testing.T) {
+			args := append([]string{"-p", dir}, strings.Fields(tt.args)...)
+			code, stdout, stderr := runCLI(t, args...)
+			if code != tt.wantCode || stdout == "" {
+				t.Fatalf("exit %d, stdout %q, stderr %q", code, stdout, stderr)
+			}
+			if strings.Contains(tt.args, "--report silent") && strings.Contains(stderr, "Diagnostics:") {
+				t.Errorf("unexpected diagnostic report on stderr: %q", stderr)
+			}
+		})
+	}
+}
+
+func TestLoadErrorsAndDiagnostics(t *testing.T) {
+	dir := writeSevereTestMIB(t)
+	code, stdout, stderr := runCLI(t, "-p", dir, "get", "--strict", "-m", "TEST-MIB", "testScalar")
+	if code != exitError || !strings.Contains(stderr, "diagnostic threshold exceeded") || !strings.Contains(stdout, "testScalar") {
+		t.Fatalf("threshold failure: exit %d, stdout %q, stderr %q", code, stdout, stderr)
+	}
+	code, _, stderr = runCLI(t, "-p", dir, "get", "--strict", "-m", "MISSING-MIB", "-m", "TEST-MIB", "testScalar")
+	if code != exitError || !strings.Contains(stderr, "diagnostic threshold exceeded") || !strings.Contains(stderr, "requested modules not found: MISSING-MIB") {
+		t.Fatalf("joined load error: exit %d, stderr %q", code, stderr)
+	}
+
+	// Lint applies its own severity threshold to the available model.
+	args := []string{"-p", dir, "lint", "--format", "json", "TEST-MIB"}
+	code, report, stderr := runCLI(t, args...)
+	if code != exitIssue || !json.Valid([]byte(report)) || !strings.Contains(report, "last-subid-zero") {
+		t.Fatalf("lint findings: exit %d, report %q, stderr %q", code, report, stderr)
+	}
+	code, stdout, stderr = runCLI(t, append(args, "MISSING-MIB")...)
+	if code != exitError || stdout != report || !strings.Contains(stderr, "requested modules not found: MISSING-MIB") {
+		t.Fatalf("partial lint report: exit %d, report %q, stderr %q", code, stdout, stderr)
+	}
+}
+
+func TestLoadFailureWithoutModel(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "missing")
+	for _, args := range [][]string{{"lint", "--format", "json"}, {"dump"}, {"get", "iso"}} {
+		code, stdout, stderr := runCLI(t, append([]string{"-p", path}, args...)...)
+		if code != exitError || stdout != "" || !strings.Contains(stderr, "failed to load") {
+			t.Errorf("%v: exit %d, stdout %q, stderr %q", args, code, stdout, stderr)
+		}
 	}
 }
 
@@ -412,6 +584,21 @@ func TestLintFormatSARIF(t *testing.T) {
 	}
 }
 
+func TestLintSARIFMissingModule(t *testing.T) {
+	code, stdout, stderr := runCLI(t, "-p", t.TempDir(), "lint", "--format", "sarif", "MISSING-MIB")
+	if code != exitError || !strings.Contains(stderr, "requested modules not found: MISSING-MIB") {
+		t.Fatalf("exit %d, stderr %q", code, stderr)
+	}
+
+	var report sarifOutput
+	if err := json.Unmarshal([]byte(stdout), &report); err != nil {
+		t.Fatal(err)
+	}
+	if len(report.Runs) != 1 || report.Runs[0].Results == nil || len(report.Runs[0].Results) != 0 {
+		t.Errorf("expected one run with an empty results array, got %s", stdout)
+	}
+}
+
 func TestLintFormatCompact(t *testing.T) {
 	dir := writeTestMIB(t)
 
@@ -550,7 +737,7 @@ func TestTraceObject(t *testing.T) {
 func TestTraceNotFound(t *testing.T) {
 	dir := writeTestMIB(t)
 
-	// trace always exits 0 - it reports whatever it finds, including "(none found)"
+	// A successful trace reports missing symbols as "(none found)".
 	code, stdout, stderr := runCLI(t, "-p", dir, "trace", "-m", "TEST-MIB", "nonExistentSymbol")
 	if code != exitOK {
 		t.Fatalf("trace exited %d, stderr=%q", code, stderr)
@@ -617,10 +804,15 @@ func TestNormalizeToDir(t *testing.T) {
 
 func writeTestMIB(t *testing.T) string {
 	t.Helper()
+	return writeTestMIBSource(t, testCLIMIB)
+}
+
+func writeTestMIBSource(t *testing.T, source string) string {
+	t.Helper()
 
 	dir := t.TempDir()
 	path := filepath.Join(dir, "TEST-MIB.mib")
-	if err := os.WriteFile(path, []byte(testCLIMIB), 0o600); err != nil {
+	if err := os.WriteFile(path, []byte(source), 0o600); err != nil {
 		t.Fatalf("write test MIB: %v", err)
 	}
 	return dir
