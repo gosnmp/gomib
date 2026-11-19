@@ -27,7 +27,7 @@ Options:
   --count               Print only the match count
   --format FMT          Output format: text, json (default: text)
   --strict              Resolver strictness: strict (tier-1 only)
-  --permissive          Resolver strictness: permissive (tier-1/2/3)
+  --permissive          Use all resolver fallbacks and tolerate nonfatal diagnostics
   -h, --help            Show help
 
 Examples:
@@ -65,8 +65,9 @@ func (c *cli) cmdFind(args []string) int {
 		return exitOK
 	}
 
-	if code, failed := c.validateStrictnessFlags(*strict, *permissive); failed {
-		return code
+	mode, ok := c.resolverMode(*strict, *permissive, mib.ResolverPermissive)
+	if !ok {
+		return exitError
 	}
 
 	positional := fs.Args()
@@ -94,18 +95,7 @@ func (c *cli) cmdFind(args []string) int {
 		return exitError
 	}
 
-	// Default to permissive+silent for query commands
-	opts := strictnessOpts(*strict, *permissive)
-	if len(opts) == 0 {
-		opts = permissiveSilentOpts()
-	}
-
-	var mods []string
-	if len(*modules) > 0 {
-		mods = *modules
-	}
-
-	m, loadStatus := c.loadMIB(mods, opts...)
+	m, loadStatus := c.loadMIB(*modules, mode, mib.ReportingSilent)
 	if m == nil {
 		return loadStatus
 	}

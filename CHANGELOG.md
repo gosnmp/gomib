@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - CLI commands emit available results on partial loads, report loader errors on stderr, and exit 2. This also applies to structured output and `lint --quiet`.
+- CLI permissive mode treats only fatal diagnostics as load failures. The `--report` level on `load` and `dump` controls diagnostic output independently of exit status.
 - Move the Go module from `github.com/golangsnmp/gomib` to `github.com/gosnmp/gomib`; update module dependencies and imports to the new path
 
 ### Changed

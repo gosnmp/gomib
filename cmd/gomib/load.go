@@ -16,7 +16,7 @@ Loads all available modules when no MODULE is specified.
 
 Options:
   --strict        Resolver strictness: strict (tier-1 only)
-  --permissive    Resolver strictness: permissive (tier-1/2/3)
+  --permissive    Use all resolver fallbacks and tolerate nonfatal diagnostics
   --report LEVEL  Diagnostic reporting: silent|quiet|default|verbose
   --stats         Show detailed statistics
   -h, --help      Show help
@@ -49,53 +49,33 @@ func (c *cli) cmdLoad(args []string) int {
 		return exitOK
 	}
 
-	if code, failed := c.validateStrictnessFlags(*strict, *permissive); failed {
-		return code
-	}
-
-	modules := fs.Args()
-	if len(modules) == 0 {
-		modules = nil
-	}
-
-	opts := strictnessOpts(*strict, *permissive)
-	reportOption, ok := c.reportOpt(*report)
+	mode, ok := c.resolverMode(*strict, *permissive, mib.ResolverNormal)
 	if !ok {
 		return exitError
 	}
-	opts = append(opts, reportOption)
 
-	m, loadStatus := c.loadMIB(modules, opts...)
+	level, ok := c.reportLevel(*report)
+	if !ok {
+		return exitError
+	}
+	// The load command also exits 1 for error-level findings.
+	m, loadStatus := c.loadMIB(fs.Args(), mode, max(level, mib.ReportingQuiet))
 	if m == nil {
 		return loadStatus
 	}
 
+	diags := reportedDiagnostics(m, level)
 	if *stats {
-		c.printDetailedStats(m)
+		c.printDetailedStats(m, len(diags))
 	} else {
 		fmt.Fprintf(c.stdout, "Loaded %d modules (%d types, %d objects, %d notifications)\n",
 			len(m.Modules()), len(m.Types()), len(m.Objects()), len(m.Notifications()))
 	}
 
-	diags := m.Diagnostics()
-	hasErrors := false
-	for _, d := range diags {
-		if d.Severity.AtLeast(mib.SeverityError) {
-			hasErrors = true
-			break
-		}
-	}
-
-	if len(diags) > 0 {
-		fmt.Fprintln(c.stderr)
-		fmt.Fprintln(c.stderr, "Diagnostics:")
-		for i := range diags {
-			c.printDiagnostic(&diags[i])
-		}
-	}
+	c.printDiagnostics(diags)
 
 	unresolved := m.Unresolved()
-	if len(unresolved) > 0 {
+	if len(unresolved) > 0 && level != mib.ReportingSilent {
 		fmt.Fprintln(c.stderr)
 		fmt.Fprintln(c.stderr, "Unresolved references:")
 		importCount := 0
@@ -122,10 +102,20 @@ func (c *cli) cmdLoad(args []string) int {
 		}
 	}
 
-	if hasErrors || (*strict && len(unresolved) > 0) {
+	if m.HasErrors() || (mode == mib.ResolverStrict && len(unresolved) > 0) {
 		return max(loadStatus, exitIssue)
 	}
 	return loadStatus
+}
+
+func (c *cli) printDiagnostics(diags []mib.Diagnostic) {
+	if len(diags) == 0 {
+		return
+	}
+	fmt.Fprintln(c.stderr, "\nDiagnostics:")
+	for i := range diags {
+		c.printDiagnostic(&diags[i])
+	}
 }
 
 func (c *cli) printDiagnostic(d *mib.Diagnostic) {
@@ -144,14 +134,14 @@ func (c *cli) printDiagnostic(d *mib.Diagnostic) {
 	}
 }
 
-func (c *cli) printDetailedStats(m *mib.Mib) {
+func (c *cli) printDetailedStats(m *mib.Mib, diagnosticCount int) {
 	fmt.Fprintln(c.stdout, "Statistics:")
 	fmt.Fprintf(c.stdout, "  Modules:        %d\n", len(m.Modules()))
 	fmt.Fprintf(c.stdout, "  Types:          %d\n", len(m.Types()))
 	fmt.Fprintf(c.stdout, "  Objects:        %d\n", len(m.Objects()))
 	fmt.Fprintf(c.stdout, "  Notifications:  %d\n", len(m.Notifications()))
 	fmt.Fprintf(c.stdout, "  OID nodes:      %d\n", m.NodeCount())
-	fmt.Fprintf(c.stdout, "  Diagnostics:    %d\n", len(m.Diagnostics()))
+	fmt.Fprintf(c.stdout, "  Diagnostics:    %d\n", diagnosticCount)
 
 	kindCounts := make(map[mib.Kind]int)
 	for node := range m.Nodes() {

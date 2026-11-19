@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gosnmp/gomib/mib"
 	"github.com/gosnmp/gomib/smiwrite"
 )
 
@@ -22,7 +23,7 @@ Options:
   --no-descriptions        Omit DESCRIPTION clauses
   --no-sequences           Omit reconstructed SEQUENCE types
   --strict                 Resolver strictness: strict (tier-1 only)
-  --permissive             Resolver strictness: permissive (tier-1/2/3)
+  --permissive             Use all resolver fallbacks and tolerate nonfatal diagnostics
   -h, --help               Show help
 
 Examples:
@@ -52,12 +53,13 @@ func (c *cli) cmdNormalize(args []string) int {
 		return exitOK
 	}
 
-	if code, failed := c.validateStrictnessFlags(*strict, *permissive); failed {
-		return code
+	mode, ok := c.resolverMode(*strict, *permissive, mib.ResolverNormal)
+	if !ok {
+		return exitError
 	}
 
 	requested := fs.Args()
-	m, loadStatus := c.loadMIB(requested, strictnessOpts(*strict, *permissive)...)
+	m, loadStatus := c.loadMIB(requested, mode, mib.ReportingSilent)
 	if m == nil {
 		return loadStatus
 	}

@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"strings"
+
+	"github.com/gosnmp/gomib/mib"
 )
 
 const dumpUsage = `gomib dump - Export resolved MIB data as canonical JSON
@@ -19,7 +21,7 @@ Options:
   --no-descriptions      Omit description fields
   --report LEVEL         Diagnostic reporting: silent|quiet|default|verbose
   --strict               Resolver strictness: strict (tier-1 only)
-  --permissive           Resolver strictness: permissive (tier-1/2/3)
+  --permissive           Use all resolver fallbacks and tolerate nonfatal diagnostics
   -h, --help             Show help
 
 Examples:
@@ -49,44 +51,23 @@ func (c *cli) cmdDump(args []string) int {
 		return exitOK
 	}
 
-	if code, failed := c.validateStrictnessFlags(*strict, *permissive); failed {
-		return code
-	}
-
-	modules := fs.Args()
-	if len(modules) == 0 {
-		modules = nil
-	}
-
-	opts := strictnessOpts(*strict, *permissive)
-	reportOption, ok := c.reportOpt(*report)
+	mode, ok := c.resolverMode(*strict, *permissive, mib.ResolverNormal)
 	if !ok {
 		return exitError
 	}
-	opts = append(opts, reportOption)
 
-	m, loadStatus := c.loadMIB(modules, opts...)
+	level, ok := c.reportLevel(*report)
+	if !ok {
+		return exitError
+	}
+	m, loadStatus := c.loadMIB(fs.Args(), mode, level)
 	if m == nil {
 		return loadStatus
 	}
 
-	// Print diagnostics to stderr
-	diags := m.Diagnostics()
-	if len(diags) > 0 {
-		fmt.Fprintln(c.stderr)
-		fmt.Fprintln(c.stderr, "Diagnostics:")
-		for i := range diags {
-			c.printDiagnostic(&diags[i])
-		}
-	}
-
-	strictnessName := "normal"
-	if *strict {
-		strictnessName = "strict"
-	} else if *permissive {
-		strictnessName = "permissive"
-	}
-	export := buildExportPayload(m, strictnessName)
+	diags := reportedDiagnostics(m, level)
+	c.printDiagnostics(diags)
+	export := buildExportPayload(m, mode.String(), diags)
 
 	if *oidFilter != "" {
 		node := m.Resolve(*oidFilter)

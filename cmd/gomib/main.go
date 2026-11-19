@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"runtime/debug"
+	"slices"
 	"strings"
 
 	"github.com/gosnmp/gomib"
@@ -196,8 +197,21 @@ func (c *cli) buildSources() ([]gomib.Source, bool, error) {
 
 // loadMIB reports loader errors on stderr. A partial model can still be used
 // for output, but exitError takes precedence over the command result.
-func (c *cli) loadMIB(modules []string, extraOpts ...gomib.LoadOption) (model *mib.Mib, exitCode int) {
-	var opts []gomib.LoadOption
+func (c *cli) loadMIB(modules []string, mode mib.ResolverStrictness, reporting mib.ReportingLevel) (model *mib.Mib, exitCode int) {
+	cfg := mib.DefaultConfig()
+	cfg.Reporting = reporting
+	if mode == mib.ResolverPermissive {
+		cfg.FailAt = mib.SeverityFatal
+	} else {
+		// The loader checks its failure threshold against retained diagnostics.
+		// Quiet is the lowest level that retains severe diagnostics.
+		cfg.Reporting = max(reporting, mib.ReportingQuiet)
+	}
+	return c.loadMIBWithConfig(modules, mode, cfg)
+}
+
+func (c *cli) loadMIBWithConfig(modules []string, mode mib.ResolverStrictness, cfg mib.DiagnosticConfig) (model *mib.Mib, exitCode int) {
+	opts := []gomib.LoadOption{gomib.WithResolverStrictness(mode), gomib.WithDiagnosticConfig(cfg)}
 
 	sources, useSystem, err := c.buildSources()
 	if err != nil {
@@ -213,7 +227,6 @@ func (c *cli) loadMIB(modules []string, extraOpts ...gomib.LoadOption) (model *m
 	if logger := c.setupLogger(); logger != nil {
 		opts = append(opts, gomib.WithLogger(logger))
 	}
-	opts = append(opts, extraOpts...)
 
 	if len(modules) > 0 {
 		opts = append(opts, gomib.WithModules(modules...))
@@ -268,57 +281,39 @@ func addStrictnessFlags(fs *flag.FlagSet) (strict, permissive *bool) {
 		fs.Bool("permissive", false, "use permissive mode for vendor MIBs")
 }
 
-func (c *cli) validateStrictnessFlags(strict, permissive bool) (int, bool) {
-	if strict && permissive {
-		c.printError("--strict and --permissive are mutually exclusive")
-		return exitError, true
-	}
-	return exitOK, false
-}
-
-// strictnessOpts returns LoadOptions for the given --strict/--permissive flags.
-//
-// --strict sets resolver strictness to tier-1 only (no fallbacks).
-// --permissive sets resolver strictness to tier-3 (all fallbacks) and relaxes
-// the diagnostic failure threshold so only fatal parse errors cause failure.
-// This makes --permissive a "best effort" mode suitable for loading large
-// vendor MIB sets that may contain spec violations.
-func strictnessOpts(strict, permissive bool) []gomib.LoadOption {
+func (c *cli) resolverMode(strict, permissive bool, defaultMode mib.ResolverStrictness) (mib.ResolverStrictness, bool) {
 	switch {
+	case strict && permissive:
+		c.printError("--strict and --permissive are mutually exclusive")
+		return defaultMode, false
 	case strict:
-		return []gomib.LoadOption{
-			gomib.WithResolverStrictness(mib.ResolverStrict),
-		}
+		return mib.ResolverStrict, true
 	case permissive:
-		return permissiveSilentOpts()
+		return mib.ResolverPermissive, true
 	default:
-		return nil
+		return defaultMode, true
 	}
 }
 
-// reportOpt returns the LoadOption for the given --report flag value.
-// Returns false if the value is invalid (after printing an error).
-func (c *cli) reportOpt(report string) (gomib.LoadOption, bool) {
+func (c *cli) reportLevel(report string) (mib.ReportingLevel, bool) {
 	switch report {
 	case "silent":
-		return gomib.WithDiagnosticConfig(mib.SilentConfig()), true
+		return mib.ReportingSilent, true
 	case "quiet":
-		return gomib.WithDiagnosticConfig(mib.QuietConfig()), true
+		return mib.ReportingQuiet, true
 	case "default":
-		return gomib.WithDiagnosticConfig(mib.DefaultConfig()), true
+		return mib.ReportingDefault, true
 	case "verbose":
-		return gomib.WithDiagnosticConfig(mib.VerboseConfig()), true
+		return mib.ReportingVerbose, true
 	default:
 		c.printError("invalid --report value %q (use silent|quiet|default|verbose)", report)
-		return nil, false
+		return mib.ReportingDefault, false
 	}
 }
 
-// permissiveSilentOpts returns LoadOptions for permissive+silent mode,
-// the default for query commands (get, find).
-func permissiveSilentOpts() []gomib.LoadOption {
-	return []gomib.LoadOption{
-		gomib.WithResolverStrictness(mib.ResolverPermissive),
-		gomib.WithDiagnosticConfig(mib.SilentConfig()),
-	}
+func reportedDiagnostics(m *mib.Mib, level mib.ReportingLevel) []mib.Diagnostic {
+	cfg := mib.ConfigForReporting(level)
+	return slices.DeleteFunc(m.Diagnostics(), func(d mib.Diagnostic) bool {
+		return !cfg.ReportsSeverity(d.Severity)
+	})
 }

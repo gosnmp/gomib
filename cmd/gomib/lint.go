@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gosnmp/gomib"
 	"github.com/gosnmp/gomib/internal/types"
 	"github.com/gosnmp/gomib/mib"
 )
@@ -170,7 +169,7 @@ func (c *cli) cmdLint(args []string) int {
 		FailAt:    mib.SeverityFatal,
 		Ignore:    cfg.ignore,
 	}
-	m, loadStatus := c.loadMIB(modules, gomib.WithDiagnosticConfig(diagCfg))
+	m, loadStatus := c.loadMIBWithConfig(modules, mib.ResolverNormal, diagCfg)
 	if m == nil {
 		return loadStatus
 	}

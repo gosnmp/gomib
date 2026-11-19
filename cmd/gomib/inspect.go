@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/gosnmp/gomib"
 	"github.com/gosnmp/gomib/mib"
 )
 
@@ -27,7 +26,7 @@ Query formats:
 Options:
   -m, --module MODULE   Module to load (repeatable, default: all)
   --strict              Resolver strictness: strict (tier-1 only)
-  --permissive          Resolver strictness: permissive (tier-1/2/3)
+  --permissive          Use all resolver fallbacks and tolerate nonfatal diagnostics
   -h, --help            Show help
 
 Examples:
@@ -53,8 +52,9 @@ func (c *cli) cmdInspect(args []string) int {
 		return exitOK
 	}
 
-	if code, failed := c.validateStrictnessFlags(*strict, *permissive); failed {
-		return code
+	mode, ok := c.resolverMode(*strict, *permissive, mib.ResolverPermissive)
+	if !ok {
+		return exitError
 	}
 
 	positional := fs.Args()
@@ -70,22 +70,7 @@ func (c *cli) cmdInspect(args []string) int {
 	}
 	query := positional[0]
 
-	// Use verbose diagnostics so we collect everything for display.
-	// Default to permissive resolver to maximize resolution.
-	opts := strictnessOpts(*strict, *permissive)
-	if len(opts) == 0 {
-		opts = []gomib.LoadOption{
-			gomib.WithResolverStrictness(mib.ResolverPermissive),
-		}
-	}
-	opts = append(opts, gomib.WithDiagnosticConfig(mib.VerboseConfig()))
-
-	var mods []string
-	if len(*modules) > 0 {
-		mods = *modules
-	}
-
-	m, loadStatus := c.loadMIB(mods, opts...)
+	m, loadStatus := c.loadMIB(*modules, mode, mib.ReportingVerbose)
 	if m == nil {
 		return loadStatus
 	}
