@@ -123,16 +123,15 @@ func (c *cli) cmdGet(args []string) int {
 		mods = *modules
 	}
 
-	m, err := c.loadMibWithOpts(mods, opts...)
-	if err != nil && m == nil {
-		c.printError("failed to load: %v", err)
-		return exitError
+	m, loadStatus := c.loadMIB(mods, opts...)
+	if m == nil {
+		return loadStatus
 	}
 
 	node := m.Resolve(query)
 	if node == nil {
 		c.printError("not found: %s", query)
-		return exitIssue
+		return max(loadStatus, exitIssue)
 	}
 
 	descLimit := 200
@@ -142,14 +141,14 @@ func (c *cli) cmdGet(args []string) int {
 
 	switch *format {
 	case formatJSON:
-		return c.printNodeJSON(node, *tree || maxDepth.set, maxDepth)
+		return max(loadStatus, c.printNodeJSON(node, *tree || maxDepth.set, maxDepth))
 	case formatText, "":
 		if *tree || maxDepth.set {
 			c.printNodeTree(node, maxDepth)
 		} else {
 			c.printNode(node, descLimit)
 		}
-		return exitOK
+		return loadStatus
 	default:
 		c.printError("unknown format: %s", *format)
 		return exitError

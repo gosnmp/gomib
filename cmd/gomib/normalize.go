@@ -56,25 +56,28 @@ func (c *cli) cmdNormalize(args []string) int {
 		return code
 	}
 
-	modules := fs.Args()
-	loadAll := len(modules) == 0
-
-	var loadModules []string
-	if !loadAll {
-		loadModules = modules
-	}
-	m, loadErr := c.loadMibWithOpts(loadModules, strictnessOpts(*strict, *permissive)...)
-	if loadErr != nil && m == nil {
-		c.printError("failed to load: %v", loadErr)
-		return exitError
+	requested := fs.Args()
+	m, loadStatus := c.loadMIB(requested, strictnessOpts(*strict, *permissive)...)
+	if m == nil {
+		return loadStatus
 	}
 
-	if loadAll {
+	var modules []string
+	if len(requested) == 0 {
 		for _, mod := range m.Modules() {
 			if mod.IsBase() {
 				continue
 			}
 			modules = append(modules, mod.Name())
+		}
+	} else {
+		for _, name := range requested {
+			if m.Module(name) != nil {
+				modules = append(modules, name)
+			}
+		}
+		if len(modules) == 0 {
+			return loadStatus
 		}
 	}
 
@@ -119,5 +122,5 @@ func (c *cli) cmdNormalize(args []string) int {
 		}
 	}
 
-	return exitOK
+	return loadStatus
 }

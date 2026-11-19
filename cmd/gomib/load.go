@@ -65,10 +65,9 @@ func (c *cli) cmdLoad(args []string) int {
 	}
 	opts = append(opts, reportOption)
 
-	m, loadErr := c.loadMibWithOpts(modules, opts...)
-	if loadErr != nil && m == nil {
-		c.printError("failed to load: %v", loadErr)
-		return exitError
+	m, loadStatus := c.loadMIB(modules, opts...)
+	if m == nil {
+		return loadStatus
 	}
 
 	if *stats {
@@ -123,17 +122,10 @@ func (c *cli) cmdLoad(args []string) int {
 		}
 	}
 
-	if loadErr != nil {
-		c.printError("%v", loadErr)
-		return exitError
+	if hasErrors || (*strict && len(unresolved) > 0) {
+		return max(loadStatus, exitIssue)
 	}
-	if hasErrors {
-		return exitIssue
-	}
-	if *strict && len(unresolved) > 0 {
-		return exitIssue
-	}
-	return exitOK
+	return loadStatus
 }
 
 func (c *cli) printDiagnostic(d *mib.Diagnostic) {

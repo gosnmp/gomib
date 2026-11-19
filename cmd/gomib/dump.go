@@ -65,10 +65,9 @@ func (c *cli) cmdDump(args []string) int {
 	}
 	opts = append(opts, reportOption)
 
-	m, err := c.loadMibWithOpts(modules, opts...)
-	if err != nil && m == nil {
-		c.printError("failed to load: %v", err)
-		return exitError
+	m, loadStatus := c.loadMIB(modules, opts...)
+	if m == nil {
+		return loadStatus
 	}
 
 	// Print diagnostics to stderr
@@ -93,7 +92,7 @@ func (c *cli) cmdDump(args []string) int {
 		node := m.Resolve(*oidFilter)
 		if node == nil {
 			c.printError("OID not found: %s", *oidFilter)
-			return exitIssue
+			return max(loadStatus, exitIssue)
 		}
 		filterByOID(export, node.OID().String())
 	}
@@ -103,10 +102,10 @@ func (c *cli) cmdDump(args []string) int {
 	}
 
 	if err := writeJSON(c.stdout, export, !*compact); err != nil {
-		c.printError("failed to marshal JSON: %v", err)
-		return exitIssue
+		c.printError("failed to write JSON: %v", err)
+		return exitError
 	}
-	return exitOK
+	return loadStatus
 }
 
 func filterByOID(export *ExportPayload, prefix string) {

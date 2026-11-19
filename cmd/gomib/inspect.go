@@ -85,17 +85,16 @@ func (c *cli) cmdInspect(args []string) int {
 		mods = *modules
 	}
 
-	m, err := c.loadMibWithOpts(mods, opts...)
-	if err != nil && m == nil {
-		c.printError("failed to load: %v", err)
-		return exitError
+	m, loadStatus := c.loadMIB(mods, opts...)
+	if m == nil {
+		return loadStatus
 	}
 
 	// Try node resolution first, then fall back to type lookup.
 	node := m.Resolve(query)
 	if node != nil {
 		c.inspectNode(m, node)
-		return exitOK
+		return loadStatus
 	}
 
 	// Try as a type name (types don't always have nodes).
@@ -105,16 +104,16 @@ func (c *cli) cmdInspect(args []string) int {
 		if mod != nil {
 			if typ := mod.Type(name); typ != nil {
 				c.inspectStandaloneType(m, typ)
-				return exitOK
+				return loadStatus
 			}
 		}
 	} else if typ := m.Type(typName); typ != nil {
 		c.inspectStandaloneType(m, typ)
-		return exitOK
+		return loadStatus
 	}
 
 	c.printError("not found: %s", query)
-	return exitIssue
+	return max(loadStatus, exitIssue)
 }
 
 func (c *cli) inspectNode(m *mib.Mib, node *mib.Node) {

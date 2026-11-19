@@ -117,7 +117,7 @@ gomib lint --summary IF-MIB
 gomib lint --list-codes
 ```
 
-Flags: `--level N` (report up to severity N, 0-6, higher is more verbose), `--fail-on N`, `--ignore CODE` (repeatable, supports globs), `--only CODE`, `--format` (text/json/sarif/compact), `--group-by` (module/code/severity), `--summary`, `--quiet`, `--list-codes` (show all diagnostic codes).
+Flags: `--level N` (report up to severity N, 0-6, higher is more verbose), `--fail-on N`, `--ignore CODE` (repeatable, supports globs), `--only CODE`, `--format` (text/json/sarif/compact), `--group-by` (module/code/severity), `--summary`, `--quiet` (suppress the report on stdout), `--list-codes` (show all diagnostic codes).
 
 Severity ordering matches gomib's libsmi-style scale, where lower numbers are more severe:
 
@@ -185,7 +185,9 @@ gomib version
 ## Exit Codes
 
 - 0 - success (clean load, match found, no issues)
-- 1 - negative result (issues/violations found, no match)
+- 1 - negative result (issues/violations found, no match). `list` also exits 1 if it cannot find a usable source, list modules, or produce the requested output format.
 - 2 - operational error (load failure, parse error)
 
-Output-only commands (dump, list, paths) use 0/1 only.
+Commands that load MIBs report loader errors on stderr and exit 2. This includes missing explicitly requested modules and diagnostics that reach the loader's configured failure threshold. A load error takes precedence over a match, a miss, or a lint finding.
+
+When the loader returns a partial model, commands produce their usual output from the available data. For example, `gomib get -m MISSING-MIB iso` can print the embedded `iso` node and still exit 2. `normalize` writes only the requested modules it found, in request order. `lint` reports diagnostics from the available modules, and loader errors go to stderr even with `--quiet`. When loading fails before a model is available, stdout is empty.

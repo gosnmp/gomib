@@ -105,10 +105,9 @@ func (c *cli) cmdFind(args []string) int {
 		mods = *modules
 	}
 
-	m, err := c.loadMibWithOpts(mods, opts...)
-	if err != nil && m == nil {
-		c.printError("failed to load: %v", err)
-		return exitError
+	m, loadStatus := c.loadMIB(mods, opts...)
+	if m == nil {
+		return loadStatus
 	}
 
 	var kind mib.Kind
@@ -190,9 +189,9 @@ func (c *cli) cmdFind(args []string) int {
 	}
 
 	if len(matches) == 0 {
-		return exitIssue
+		return max(loadStatus, exitIssue)
 	}
-	return exitOK
+	return loadStatus
 }
 
 func moduleName(mod *mib.Module) string {

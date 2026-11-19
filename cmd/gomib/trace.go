@@ -82,10 +82,9 @@ func (c *cli) cmdTrace(args []string) int {
 		loadMode = fmt.Sprintf("Load WithModules(%v)", mods)
 	}
 
-	m, err := c.loadMibWithOpts(mods, strictnessOpts(*strict, *permissive)...)
-	if err != nil && m == nil {
-		c.printError("failed to load: %v", err)
-		return exitError
+	m, loadStatus := c.loadMIB(mods, strictnessOpts(*strict, *permissive)...)
+	if m == nil {
+		return loadStatus
 	}
 
 	fmt.Fprintf(c.stdout, "Load mode: %s\n", loadMode)
@@ -94,7 +93,7 @@ func (c *cli) cmdTrace(args []string) int {
 
 	c.traceSymbol(m, symbol)
 
-	return exitOK
+	return loadStatus
 }
 
 func (c *cli) traceSymbol(m *mib.Mib, symbol string) {

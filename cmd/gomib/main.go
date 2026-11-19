@@ -194,12 +194,15 @@ func (c *cli) buildSources() ([]gomib.Source, bool, error) {
 	return sources, false, nil
 }
 
-func (c *cli) loadMibWithOpts(modules []string, extraOpts ...gomib.LoadOption) (*mib.Mib, error) {
+// loadMIB reports loader errors on stderr. A partial model can still be used
+// for output, but exitError takes precedence over the command result.
+func (c *cli) loadMIB(modules []string, extraOpts ...gomib.LoadOption) (model *mib.Mib, exitCode int) {
 	var opts []gomib.LoadOption
 
 	sources, useSystem, err := c.buildSources()
 	if err != nil {
-		return nil, err
+		c.printError("failed to load: %v", err)
+		return nil, exitError
 	}
 	if useSystem {
 		opts = append(opts, gomib.WithSystemPaths())
@@ -215,7 +218,12 @@ func (c *cli) loadMibWithOpts(modules []string, extraOpts ...gomib.LoadOption) (
 	if len(modules) > 0 {
 		opts = append(opts, gomib.WithModules(modules...))
 	}
-	return gomib.Load(context.Background(), opts...)
+	model, err = gomib.Load(context.Background(), opts...)
+	if err != nil {
+		c.printError("failed to load: %v", err)
+		return model, exitError
+	}
+	return model, exitOK
 }
 
 func (c *cli) printVersion() {
