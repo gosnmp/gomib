@@ -86,18 +86,18 @@ func main() {
 		fmt.Printf("    includes: %s\n", strings.Join(mib.NameRefNames(sup.Includes), ", "))
 		for i := range sup.ObjectVariations {
 			v := &sup.ObjectVariations[i]
-			access := ""
-			if v.Access != nil {
-				access = v.Access.String()
+			accessName := ""
+			if access, ok := v.Access(); ok {
+				accessName = access.String()
 			}
-			fmt.Printf("    object variation %-18s access=%s\n", v.Object, access)
+			fmt.Printf("    object variation %-18s access=%s\n", v.Object, accessName)
 		}
 		for _, v := range sup.NotificationVariations {
-			access := ""
-			if v.Access != nil {
-				access = v.Access.String()
+			accessName := ""
+			if access, ok := v.Access(); ok {
+				accessName = access.String()
 			}
-			fmt.Printf("    notification variation %-11s access=%s\n", v.Notification, access)
+			fmt.Printf("    notification variation %-11s access=%s\n", v.Notification, accessName)
 		}
 	}
 }

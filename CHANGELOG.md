@@ -10,6 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Breaking Changes
 
 - Move the Go module from `github.com/golangsnmp/gomib` to `github.com/gosnmp/gomib`; update module dependencies and imports to the new path
+- Replace `DefVal.Value()` and `mib.DefValAs[T](dv)` with the typed methods
+  `Int64`, `Uint64`, `QuotedString`, `EnumLabel`, `Bytes`, `Bits`, and `OID`.
+  Each returns a value and a match flag. For example, use `labels, ok := dv.Bits()`
+  for a BITS default. Callers own the returned bytes, labels, or OID arcs.
+- Read conformance access with `access, ok := obj.MinAccess()` or
+  `access, ok := variation.Access()`. The flag reports whether the clause was
+  present, including an explicit `not-accessible`. These methods replace
+  pointer fields on `ComplianceObject`, `ObjectVariation`, and
+  `NotificationVariation`. The resolver sets these clauses when loading a MIB.
+  Callers that previously supplied them in struct literals must use resolver output.
+  Directly marshaling these records with `encoding/json` now omits `MinAccess`
+  and `Access`. To preserve the previous JSON shape, use a `*mib.Access` field
+  in your output struct. Set it to `&access` when `ok` is true and leave it
+  nil to encode an omitted clause as `null`.
 
 ### Changed
 

@@ -264,8 +264,8 @@ func TestConvertDefVal(t *testing.T) {
 				dv := convertDefVal(ctx, &module.DefValInteger{Value: tt.input}, mod, syntax, types.Span{})
 				testutil.NotNil(t, dv, "convertDefVal returned nil")
 				testutil.Equal(t, model.DefValKindInt, dv.Kind(), "kind")
-				v, ok := model.DefValAs[int64](*dv)
-				testutil.True(t, ok, "model.DefValAs[int64] ok")
+				v, ok := dv.Int64()
+				testutil.True(t, ok, "Int64() ok")
 				testutil.Equal(t, tt.input, v, "value")
 				testutil.Equal(t, tt.raw, dv.Raw(), "raw")
 			})
@@ -280,8 +280,8 @@ func TestConvertDefVal(t *testing.T) {
 		dv := convertDefVal(ctx, &module.DefValUnsigned{Value: 12345}, mod, syntax, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindUint, dv.Kind(), "kind")
-		v, ok := model.DefValAs[uint64](*dv)
-		testutil.True(t, ok, "model.DefValAs[uint64] ok")
+		v, ok := dv.Uint64()
+		testutil.True(t, ok, "Uint64() ok")
 		testutil.Equal(t, uint64(12345), v, "value")
 		testutil.Equal(t, "12345", dv.Raw(), "raw")
 	})
@@ -293,8 +293,8 @@ func TestConvertDefVal(t *testing.T) {
 		dv := convertDefVal(ctx, &module.DefValString{Value: "public"}, mod, &module.TypeSyntaxTypeRef{Name: "DisplayString"}, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindString, dv.Kind(), "kind")
-		v, ok := model.DefValAs[string](*dv)
-		testutil.True(t, ok, "model.DefValAs[string] ok")
+		v, ok := dv.QuotedString()
+		testutil.True(t, ok, "QuotedString() ok")
 		testutil.Equal(t, "public", v, "value")
 		testutil.Equal(t, `"public"`, dv.Raw(), "raw")
 	})
@@ -306,7 +306,7 @@ func TestConvertDefVal(t *testing.T) {
 		dv := convertDefVal(ctx, &module.DefValHexString{Value: "FF00"}, mod, &module.TypeSyntaxOctetString{}, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindBytes, dv.Kind(), "kind")
-		bytes, ok := model.DefValAs[[]byte](*dv)
+		bytes, ok := dv.Bytes()
 		testutil.True(t, ok, "value is not []byte")
 		want := []byte{0xFF, 0x00}
 		testutil.Len(t, bytes, len(want), "bytes len")
@@ -323,7 +323,7 @@ func TestConvertDefVal(t *testing.T) {
 		dv := convertDefVal(ctx, &module.DefValBinaryString{Value: "10101010"}, mod, &module.TypeSyntaxOctetString{}, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindBytes, dv.Kind(), "kind")
-		bytes, ok := model.DefValAs[[]byte](*dv)
+		bytes, ok := dv.Bytes()
 		testutil.True(t, ok, "value is not []byte")
 		testutil.Len(t, bytes, 1, "bytes len")
 		testutil.Equal(t, byte(0xAA), bytes[0], "bytes[0]")
@@ -343,8 +343,8 @@ func TestConvertDefVal(t *testing.T) {
 		dv := convertDefVal(ctx, &module.DefValEnum{Name: "enabled"}, mod, syntax, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindEnum, dv.Kind(), "kind")
-		v, ok := model.DefValAs[string](*dv)
-		testutil.True(t, ok, "model.DefValAs[string] ok")
+		v, ok := dv.EnumLabel()
+		testutil.True(t, ok, "EnumLabel() ok")
 		testutil.Equal(t, "enabled", v, "value")
 		testutil.Equal(t, "enabled", dv.Raw(), "raw")
 	})
@@ -363,7 +363,7 @@ func TestConvertDefVal(t *testing.T) {
 		dv := convertDefVal(ctx, &module.DefValEnum{Name: "myTarget"}, mod, syntax, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindOID, dv.Kind(), "kind")
-		oid, ok := model.DefValAs[model.OID](*dv)
+		oid, ok := dv.OID()
 		testutil.True(t, ok, "value is not OID")
 		testutil.Len(t, oid, 2, "oid len")
 		testutil.Equal(t, uint32(1), oid[0], "oid[0]")
@@ -388,7 +388,7 @@ func TestConvertDefVal(t *testing.T) {
 		dv := convertDefVal(ctx, &module.DefValBits{Labels: []string{"flag1", "flag2"}}, mod, syntax, types.Span{})
 		testutil.NotNil(t, dv, "convertDefVal returned nil")
 		testutil.Equal(t, model.DefValKindBits, dv.Kind(), "kind")
-		labels, ok := model.DefValAs[[]string](*dv)
+		labels, ok := dv.Bits()
 		testutil.True(t, ok, "value is not []string")
 		testutil.Len(t, labels, 2, "labels len")
 		testutil.Equal(t, "flag1", labels[0], "labels[0]")
@@ -732,25 +732,28 @@ func TestConvertComplianceModules(t *testing.T) {
 	})
 
 	t.Run("module with objects and min-access", func(t *testing.T) {
-		readOnly := types.AccessReadOnly
+		minAccess := types.AccessNotAccessible
 		input := []module.ComplianceModule{
 			{
 				ModuleName: "IF-MIB",
 				Objects: []module.ComplianceObject{
-					{Object: "ifAdminStatus", MinAccess: &readOnly, Description: "obj desc"},
+					{Object: "ifAdminStatus", MinAccess: &minAccess, Description: "obj desc"},
 					{Object: "ifOperStatus", MinAccess: nil},
 				},
 			},
 		}
 		result := convertComplianceModules(nil, nil, input)
+		minAccess = types.AccessReadWrite
 		testutil.Len(t, result[0].Objects, 2, "objects")
 		obj0 := result[0].Objects[0]
 		testutil.Equal(t, "ifAdminStatus", obj0.Object, "object")
-		testutil.NotNil(t, obj0.MinAccess, "min-access")
-		testutil.Equal(t, model.AccessReadOnly, *obj0.MinAccess, "min-access")
+		access, ok := obj0.MinAccess()
+		testutil.True(t, ok, "min-access")
+		testutil.Equal(t, model.AccessNotAccessible, access, "min-access")
 		testutil.Equal(t, "obj desc", obj0.Description, "desc")
 		obj1 := result[0].Objects[1]
-		testutil.Nil(t, obj1.MinAccess, "expected nil min-access for second object")
+		_, ok = obj1.MinAccess()
+		testutil.False(t, ok, "omitted access clause")
 	})
 
 	t.Run("multiple modules", func(t *testing.T) {
@@ -852,13 +855,16 @@ func TestConvertSupportsModules(t *testing.T) {
 			},
 		}
 		result := convertSupportsModules(ctx, mod, input)
+		readOnly = types.AccessReadWrite
 		vars := result[0].ObjectVariations
 		testutil.Len(t, vars, 2, "variations")
 		testutil.Equal(t, "ifAdminStatus", vars[0].Object, "object")
-		testutil.NotNil(t, vars[0].Access, "access")
-		testutil.Equal(t, model.AccessReadOnly, *vars[0].Access, "access")
+		access, ok := vars[0].Access()
+		testutil.True(t, ok, "access")
+		testutil.Equal(t, model.AccessReadOnly, access, "access")
 		testutil.Equal(t, "read only", vars[0].Description, "desc")
-		testutil.Nil(t, vars[1].Access, "expected nil access for second variation")
+		_, ok = vars[1].Access()
+		testutil.False(t, ok, "omitted access clause")
 	})
 
 	t.Run("notification variations with access", func(t *testing.T) {
@@ -876,13 +882,16 @@ func TestConvertSupportsModules(t *testing.T) {
 			},
 		}
 		result := convertSupportsModules(ctx, mod, input)
+		notImpl = types.AccessReadWrite
 		vars := result[0].NotificationVariations
 		testutil.Len(t, vars, 2, "notification variations")
 		testutil.Equal(t, "linkDown", vars[0].Notification, "notification")
-		testutil.NotNil(t, vars[0].Access, "access")
-		testutil.Equal(t, model.AccessNotImplemented, *vars[0].Access, "access")
+		access, ok := vars[0].Access()
+		testutil.True(t, ok, "access")
+		testutil.Equal(t, model.AccessNotImplemented, access, "access")
 		testutil.Equal(t, "not supported", vars[0].Description, "desc")
-		testutil.Nil(t, vars[1].Access, "expected nil access for second variation")
+		_, ok = vars[1].Access()
+		testutil.False(t, ok, "omitted access clause")
 	})
 
 	t.Run("not-implemented access preserved in variations", func(t *testing.T) {
@@ -900,8 +909,9 @@ func TestConvertSupportsModules(t *testing.T) {
 		result := convertSupportsModules(ctx, mod, input)
 		vars := result[0].ObjectVariations
 		testutil.Len(t, vars, 1, "variations")
-		testutil.NotNil(t, vars[0].Access, "access is nil, want not-implemented")
-		testutil.Equal(t, model.AccessNotImplemented, *vars[0].Access, "access")
+		access, ok := vars[0].Access()
+		testutil.True(t, ok, "explicit access clause")
+		testutil.Equal(t, model.AccessNotImplemented, access, "access")
 	})
 
 	t.Run("mixed object and notification variations", func(t *testing.T) {
@@ -980,8 +990,8 @@ func TestConvertSupportsModules(t *testing.T) {
 		testutil.Len(t, vars, 1, "variations")
 		testutil.False(t, vars[0].DefVal.IsZero(), "expected non-zero DefVal")
 		testutil.Equal(t, model.DefValKindInt, vars[0].DefVal.Kind(), "defval kind")
-		v, ok := model.DefValAs[int64](vars[0].DefVal)
-		testutil.True(t, ok, "model.DefValAs[int64] ok")
+		v, ok := vars[0].DefVal.Int64()
+		testutil.True(t, ok, "Int64() ok")
 		testutil.Equal(t, int64(2), v, "defval value")
 	})
 }
@@ -1426,7 +1436,7 @@ func TestCreateResolvedObjects(t *testing.T) {
 	testutil.Len(t, sysName.OidRefs(), 1, "sysName oid refs")
 	testutil.Equal(t, "testRoot", sysName.OidRefs()[0].Name, "sysName oid ref")
 	testutil.Equal(t, model.DefValKindString, sysName.DefaultValue().Kind(), "sysName defval kind")
-	defval, ok := model.DefValAs[string](sysName.DefaultValue())
+	defval, ok := sysName.DefaultValue().QuotedString()
 	testutil.True(t, ok, "sysName defval type")
 	testutil.Equal(t, "public", defval, "sysName defval")
 	testutil.Equal(t, sysName, sysNameNode.Object(), "sysName node object")
@@ -1521,16 +1531,18 @@ func TestCreateResolvedCapabilities(t *testing.T) {
 	testutil.Equal(t, "ifAdminStatus", objVar.Object, "object variation name")
 	testutil.NotNil(t, objVar.Syntax, "object variation syntax")
 	testutil.Equal(t, displayType, objVar.Syntax.Type, "object variation syntax type")
-	testutil.NotNil(t, objVar.Access, "object variation access")
-	testutil.Equal(t, model.AccessReadOnly, *objVar.Access, "object variation access")
+	access, ok := objVar.Access()
+	testutil.True(t, ok, "object variation access")
+	testutil.Equal(t, model.AccessReadOnly, access, "object variation access")
 	testutil.Len(t, objVar.CreationRequires, 1, "object variation creation-requires")
 	testutil.Equal(t, "ifIndex", objVar.CreationRequires[0].Name, "object variation creation-requires")
 	testutil.Equal(t, model.DefValKindString, objVar.DefVal.Kind(), "object variation defval kind")
 
 	notifVar := supports[0].NotificationVariations[0]
 	testutil.Equal(t, "linkDown", notifVar.Notification, "notification variation name")
-	testutil.NotNil(t, notifVar.Access, "notification variation access")
-	testutil.Equal(t, model.AccessReadOnly, *notifVar.Access, "notification variation access")
+	access, ok = notifVar.Access()
+	testutil.True(t, ok, "notification variation access")
+	testutil.Equal(t, model.AccessReadOnly, access, "notification variation access")
 
 	hasDiag(t, ctx.Diagnostics(), types.DiagVariationAccessNotifOnly)
 }
@@ -1558,7 +1570,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 		}, mod, nil, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
 		testutil.Equal(t, model.DefValKindOID, dv.Kind(), "kind")
-		oid, ok := model.DefValAs[model.OID](*dv)
+		oid, ok := dv.OID()
 		testutil.True(t, ok, "expected OID value")
 		want := model.OID{1, 3, 42, 1}
 		testutil.Equal(t, want.String(), oid.String(), "oid")
@@ -1571,7 +1583,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 			},
 		}, mod, nil, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
-		oid, ok := model.DefValAs[model.OID](*dv)
+		oid, ok := dv.OID()
 		testutil.True(t, ok, "expected OID value")
 		want := model.OID{1, 3}
 		testutil.Equal(t, want.String(), oid.String(), "oid")
@@ -1585,7 +1597,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 			},
 		}, mod, nil, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
-		oid, ok := model.DefValAs[model.OID](*dv)
+		oid, ok := dv.OID()
 		testutil.True(t, ok, "expected OID value")
 		want := model.OID{1, 3, 5}
 		testutil.Equal(t, want.String(), oid.String(), "oid")
@@ -1599,7 +1611,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 		}, mod, nil, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
 		testutil.Equal(t, model.DefValKindOID, dv.Kind(), "kind")
-		oid, ok := model.DefValAs[model.OID](*dv)
+		oid, ok := dv.OID()
 		testutil.True(t, ok, "expected OID value")
 		want := model.OID{1, 3}
 		testutil.Equal(t, want.String(), oid.String(), "oid")
@@ -1618,7 +1630,7 @@ func TestConvertDefValOidValue(t *testing.T) {
 		}, mod, nil, types.Span{})
 		testutil.NotNil(t, dv, "expected non-nil")
 		testutil.Equal(t, model.DefValKindOID, dv.Kind(), "kind")
-		oid, ok := model.DefValAs[model.OID](*dv)
+		oid, ok := dv.OID()
 		testutil.True(t, ok, "expected OID value")
 		want := model.OID{1, 3}
 		testutil.Equal(t, want.String(), oid.String(), "oid")
@@ -1674,7 +1686,7 @@ func TestConvertDefValOidValueImportUse(t *testing.T) {
 		}, importer, nil, types.Span{})
 
 		testutil.NotNil(t, dv, "expected imported root to resolve")
-		oid, ok := model.DefValAs[model.OID](*dv)
+		oid, ok := dv.OID()
 		testutil.True(t, ok, "expected OID value")
 		testutil.Equal(t, "1.3.42", oid.String(), "oid")
 		testutil.True(t, ctx.usedImports.has(importer, "importedRoot"), "unqualified root should mark import used")
@@ -1690,7 +1702,7 @@ func TestConvertDefValOidValueImportUse(t *testing.T) {
 		}, importer, nil, types.Span{})
 
 		testutil.NotNil(t, dv, "expected qualified root to resolve")
-		oid, ok := model.DefValAs[model.OID](*dv)
+		oid, ok := dv.OID()
 		testutil.True(t, ok, "expected OID value")
 		testutil.Equal(t, "1.3.42", oid.String(), "oid")
 		testutil.False(t, ctx.usedImports.has(importer, "importedRoot"), "qualified root should not mark import used")

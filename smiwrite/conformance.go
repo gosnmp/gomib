@@ -94,8 +94,8 @@ func (e *emitter) emitModuleCompliance(comp *mib.Compliance) error {
 					return err
 				}
 			}
-			if co.MinAccess != nil {
-				if _, err := fmt.Fprintf(e.w, "            MIN-ACCESS %s\n", formatAccess(*co.MinAccess)); err != nil {
+			if access, ok := co.MinAccess(); ok {
+				if _, err := fmt.Fprintf(e.w, "            MIN-ACCESS %s\n", formatAccess(access)); err != nil {
 					return err
 				}
 			}
@@ -153,8 +153,8 @@ func (e *emitter) emitAgentCapabilities(c *mib.Capability) error {
 					return err
 				}
 			}
-			if ov.Access != nil {
-				if _, err := fmt.Fprintf(e.w, "            ACCESS %s\n", formatAccess(*ov.Access)); err != nil {
+			if access, ok := ov.Access(); ok {
+				if _, err := fmt.Fprintf(e.w, "            ACCESS %s\n", formatAccess(access)); err != nil {
 					return err
 				}
 			}
@@ -175,8 +175,8 @@ func (e *emitter) emitAgentCapabilities(c *mib.Capability) error {
 			if _, err := fmt.Fprintf(e.w, "        VARIATION %s\n", nv.Notification); err != nil {
 				return err
 			}
-			if nv.Access != nil {
-				if _, err := fmt.Fprintf(e.w, "            ACCESS %s\n", formatAccess(*nv.Access)); err != nil {
+			if access, ok := nv.Access(); ok {
+				if _, err := fmt.Fprintf(e.w, "            ACCESS %s\n", formatAccess(access)); err != nil {
 					return err
 				}
 			}

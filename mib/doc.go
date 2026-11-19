@@ -26,7 +26,10 @@
 // Model types use unexported fields with accessor methods. Small value
 // structs such as [Range], [NamedValue], [Revision], [IndexEntry], and
 // [TrapInfo] expose fields directly. Slice-returning accessors return copies,
-// so callers may modify returned slices without affecting the model.
+// so callers may modify returned slices without affecting the model. This
+// includes byte, BITS, and OID values extracted from a [DefVal]. Entity
+// pointers, including elements of collections such as [Mib.Objects], identify
+// shared nodes and definitions and must be treated as read-only.
 //
 // # Resolution
 //

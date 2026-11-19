@@ -1,6 +1,7 @@
 package model
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/gosnmp/gomib/internal/module"
@@ -97,66 +98,104 @@ func TestDefValKind(t *testing.T) {
 	}
 }
 
-func TestDefValValue(t *testing.T) {
-	dv := NewDefValInt(42, "42")
-	v := dv.Value()
-	testutil.Equal(t, 42, v.(int64), "Value()")
-}
-
 func TestDefValRaw(t *testing.T) {
 	dv := NewDefValInt(42, "42")
 	testutil.Equal(t, "42", dv.Raw(), "Raw()")
 }
 
-func TestDefValAs(t *testing.T) {
+func TestDefValAccessors(t *testing.T) {
 	t.Run("int64 match", func(t *testing.T) {
 		dv := NewDefValInt(42, "42")
-		v, ok := DefValAs[int64](dv)
-		testutil.True(t, ok, "DefValAs[int64] should succeed")
+		v, ok := dv.Int64()
+		testutil.True(t, ok, "Int64() should succeed")
 		testutil.Equal(t, 42, v, "got")
 	})
 
 	t.Run("uint64 match", func(t *testing.T) {
 		dv := NewDefValUint(100, "100")
-		v, ok := DefValAs[uint64](dv)
-		testutil.True(t, ok, "DefValAs[uint64] should succeed")
+		v, ok := dv.Uint64()
+		testutil.True(t, ok, "Uint64() should succeed")
 		testutil.Equal(t, 100, v, "got")
 	})
 
 	t.Run("string match", func(t *testing.T) {
 		dv := NewDefValString("hello", `"hello"`)
-		v, ok := DefValAs[string](dv)
-		testutil.True(t, ok, "DefValAs[string] should succeed")
+		v, ok := dv.QuotedString()
+		testutil.True(t, ok, "QuotedString() should succeed")
 		testutil.Equal(t, "hello", v, "got")
+		_, ok = dv.EnumLabel()
+		testutil.False(t, ok, "quoted string has no enum label")
 	})
 
 	t.Run("bytes match", func(t *testing.T) {
 		dv := NewDefValBytes([]byte{0xAB}, "x")
-		v, ok := DefValAs[[]byte](dv)
-		testutil.True(t, ok, "DefValAs[[]byte] should succeed")
-		testutil.Len(t, v, 1, "DefValAs[[]byte] length")
-		testutil.Equal(t, byte(0xAB), v[0], "DefValAs[[]byte] value")
+		v, ok := dv.Bytes()
+		testutil.True(t, ok, "Bytes() should succeed")
+		testutil.Len(t, v, 1, "Bytes() length")
+		testutil.Equal(t, byte(0xAB), v[0], "Bytes() value")
 	})
 
-	t.Run("type mismatch", func(t *testing.T) {
-		dv := NewDefValInt(42, "42")
-		_, ok := DefValAs[string](dv)
-		testutil.False(t, ok, "DefValAs[string] on int DefVal should return false")
+	t.Run("enum label", func(t *testing.T) {
+		dv := NewDefValEnum("hello", "hello")
+		v, ok := dv.EnumLabel()
+		testutil.True(t, ok, "enum label present")
+		testutil.Equal(t, "hello", v, "label")
+		_, ok = dv.QuotedString()
+		testutil.False(t, ok, "enum label is unquoted")
+	})
+
+	t.Run("unset bits", func(t *testing.T) {
+		v, ok := (DefVal{}).Bits()
+		testutil.False(t, ok, "absent default")
+		testutil.Nil(t, v, "unset bits")
 	})
 
 	t.Run("bits match", func(t *testing.T) {
 		dv := NewDefValBits([]string{"a", "b"}, "x")
-		v, ok := DefValAs[[]string](dv)
-		testutil.True(t, ok, "DefValAs[[]string] should succeed")
+		v, ok := dv.Bits()
+		testutil.True(t, ok, "Bits() should succeed")
 		testutil.Len(t, v, 2, "got")
 	})
 
 	t.Run("oid match", func(t *testing.T) {
 		dv := NewDefValOID(OID{1, 3}, "1.3")
-		v, ok := DefValAs[OID](dv)
-		testutil.True(t, ok, "DefValAs[OID] should succeed")
+		v, ok := dv.OID()
+		testutil.True(t, ok, "OID() should succeed")
 		testutil.Equal(t, "1.3", v.String(), "got")
 	})
+}
+
+func TestDefaultValueIsolation(t *testing.T) {
+	testDefaultSlice(t, []byte{0xAA, 0xBB}, NewDefValBytes, DefVal.Bytes)
+	testDefaultSlice(t, []string{"write", "read"}, NewDefValBits, DefVal.Bits)
+	testDefaultSlice(t, OID{1, 3, 6}, NewDefValOID, DefVal.OID)
+}
+
+func testDefaultSlice[S ~[]E, E comparable](t *testing.T, want S, makeDefault func(S, string) DefVal, extract func(DefVal) (S, bool)) {
+	t.Helper()
+	input := slices.Clone(want)
+	d := makeDefault(input, "raw")
+	var zero E
+	input[0] = zero
+	obj := &Object{defVal: &d}
+	capability := &Capability{supports: []CapabilitiesModule{{
+		ObjectVariations: []ObjectVariation{{DefVal: d}},
+	}}}
+	for _, read := range []func() DefVal{
+		obj.DefaultValue,
+		func() DefVal { return capability.Supports()[0].ObjectVariations[0].DefVal },
+	} {
+		saved := read()
+		values, ok := extract(saved)
+		testutil.True(t, ok, "extract %s", d.Kind())
+		testutil.SliceEqual(t, want, values, "constructor owns input")
+		values[0] = zero
+		for _, got := range []DefVal{saved, read()} {
+			values, ok := extract(got)
+			testutil.True(t, ok, "reread %s", d.Kind())
+			testutil.SliceEqual(t, want, values, "caller owns extracted values")
+		}
+	}
 }
 
 func TestDefValStringZeroValue(t *testing.T) {
@@ -226,7 +265,6 @@ func TestModuleImportsDeepClone(t *testing.T) {
 
 func TestComplianceModulesDeepClone(t *testing.T) {
 	c := NewCompliance("testCompliance")
-	access := AccessReadOnly
 	c.setModules([]ComplianceModule{
 		{
 			ModuleName:      "IF-MIB",
@@ -236,7 +274,6 @@ func TestComplianceModulesDeepClone(t *testing.T) {
 				Object:      "ifType",
 				Syntax:      &SyntaxConstraints{Sizes: []Range{{Min: NewSignedRangeBound(1), Max: NewSignedRangeBound(255)}}},
 				WriteSyntax: &SyntaxConstraints{Ranges: []Range{{Min: NewSignedRangeBound(0), Max: NewSignedRangeBound(100)}}},
-				MinAccess:   &access,
 				Description: "obj desc",
 			}},
 		},

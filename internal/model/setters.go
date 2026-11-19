@@ -134,6 +134,20 @@ func SetCapabilityOidRefs(c *Capability, refs []OidRef)           { c.setOidRefs
 func SetCapabilityProductRelease(c *Capability, r string)         { c.setProductRelease(r) }
 func SetCapabilitySupports(c *Capability, s []CapabilitiesModule) { c.setSupports(s) }
 
+// --- Conformance clause setters ---
+
+func SetComplianceObjectMinAccess(o *ComplianceObject, access Access) {
+	o.minAccess, o.hasMinAccess = access, true
+}
+
+func SetObjectVariationAccess(v *ObjectVariation, access Access) {
+	v.access, v.hasAccess = access, true
+}
+
+func SetNotificationVariationAccess(v *NotificationVariation, access Access) {
+	v.access, v.hasAccess = access, true
+}
+
 // --- Module setters ---
 
 func SetModuleUsedImportNames(m *Module, u map[string]struct{}) { m.setUsedImportNames(u) }

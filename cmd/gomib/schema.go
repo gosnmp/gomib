@@ -516,28 +516,28 @@ func exportDefaultValue(dv mib.DefVal) *ExportDefaultValue {
 	}
 	switch dv.Kind() { //nolint:exhaustive // DefValKindUnset handled by IsZero check above
 	case mib.DefValKindInt:
-		v, _ := mib.DefValAs[int64](dv)
+		v, _ := dv.Int64()
 		result.Value = strconv.FormatInt(v, 10)
 	case mib.DefValKindUint:
-		v, _ := mib.DefValAs[uint64](dv)
+		v, _ := dv.Uint64()
 		result.Value = strconv.FormatUint(v, 10)
 	case mib.DefValKindString:
-		v, _ := mib.DefValAs[string](dv)
+		v, _ := dv.QuotedString()
 		result.Value = v
 	case mib.DefValKindBytes:
-		v, _ := mib.DefValAs[[]byte](dv)
+		v, _ := dv.Bytes()
 		result.Value = strings.ToUpper(hex.EncodeToString(v))
 	case mib.DefValKindEnum:
-		v, _ := mib.DefValAs[string](dv)
+		v, _ := dv.EnumLabel()
 		result.Value = v
 	case mib.DefValKindBits:
-		v, _ := mib.DefValAs[[]string](dv)
+		v, _ := dv.Bits()
 		if v == nil {
 			v = []string{}
 		}
 		result.Value = v
 	case mib.DefValKindOID:
-		v, _ := mib.DefValAs[mib.OID](dv)
+		v, _ := dv.OID()
 		result.Value = v.String()
 	}
 	return result
@@ -1154,8 +1154,8 @@ func buildExportCompliance(comp *mib.Compliance, m *mib.Mib) ExportCompliance {
 				WriteSyntax: exportSyntaxConstraints(co.WriteSyntax),
 				Description: strPtr(co.Description),
 			}
-			if co.MinAccess != nil {
-				s := co.MinAccess.String()
+			if access, ok := co.MinAccess(); ok {
+				s := access.String()
 				vco.MinAccess = &s
 			}
 			vcm.Objects = append(vcm.Objects, vco)
@@ -1214,8 +1214,8 @@ func buildExportCapability(mibCap *mib.Capability, m *mib.Mib) ExportCapability 
 				Description:      strPtr(ov.Description),
 				CreationRequires: make([]ExportObjRef, 0),
 			}
-			if ov.Access != nil {
-				a := ov.Access.String()
+			if access, ok := ov.Access(); ok {
+				a := access.String()
 				vov.Access = &a
 			}
 			for _, cr := range ov.CreationRequires {
@@ -1231,8 +1231,8 @@ func buildExportCapability(mibCap *mib.Capability, m *mib.Mib) ExportCapability 
 				Notification: ref,
 				Description:  strPtr(nv.Description),
 			}
-			if nv.Access != nil {
-				a := nv.Access.String()
+			if access, ok := nv.Access(); ok {
+				a := access.String()
 				vnv.Access = &a
 			}
 			vs.NotificationVariations = append(vs.NotificationVariations, vnv)

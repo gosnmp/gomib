@@ -90,9 +90,6 @@ const (
 	DefValKindOID    = model.DefValKindOID
 )
 
-// DefValAs extracts the default value as the concrete type T.
-func DefValAs[T any](d DefVal) (T, bool) { return model.DefValAs[T](d) }
-
 // --- Unresolved references ---
 
 type (
