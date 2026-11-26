@@ -2,7 +2,19 @@ FIXTURE_MODULES = IF-MIB SNMPv2-MIB IP-MIB ENTITY-MIB BRIDGE-MIB
 FIXTURE_DIR = testdata/fixtures/netsnmp
 CORPUS_PATH = testdata/corpus/primary
 
-.PHONY: fixtures gomib-netsnmp test lint fuzz
+FUZZ_TARGETS := \
+	./internal/lexer/FuzzTokenize \
+	./internal/cst/parser/FuzzCSTParseModule \
+	./internal/cst/parser/FuzzCSTConstraintParsing \
+	./internal/graph/FuzzResolutionOrder \
+	./internal/model/FuzzParseOID \
+	./internal/resolver/FuzzFormatOID \
+	./FuzzParse \
+	./FuzzPipeline \
+	./FuzzMultiModule
+FUZZ_NAMES := $(notdir $(FUZZ_TARGETS))
+
+.PHONY: $(FUZZ_NAMES) fixtures gomib-netsnmp test lint fuzz
 
 gomib-netsnmp:
 	CGO_ENABLED=1 go build -tags cgo -o gomib-netsnmp ./cmd/gomib-netsnmp
@@ -17,14 +29,10 @@ test:
 lint:
 	golangci-lint run ./...
 
-fuzz:
-	@echo "Running all fuzz targets for $(or $(FUZZ_TIME),30s) each..."
-	go test -fuzz=FuzzTokenize -fuzztime=$(or $(FUZZ_TIME),30s) ./internal/lexer/
-	go test -fuzz=FuzzParseModule -fuzztime=$(or $(FUZZ_TIME),30s) ./internal/parser/
-	go test -fuzz=FuzzConstraintParsing -fuzztime=$(or $(FUZZ_TIME),30s) ./internal/parser/
-	go test -fuzz=FuzzResolutionOrder -fuzztime=$(or $(FUZZ_TIME),30s) ./internal/graph/
-	go test -fuzz=FuzzParseOID -fuzztime=$(or $(FUZZ_TIME),30s) ./mib/
-	go test -fuzz=FuzzFormatOID -fuzztime=$(or $(FUZZ_TIME),30s) ./mib/
-	go test -fuzz=FuzzLower -fuzztime=$(or $(FUZZ_TIME),30s) .
-	go test -fuzz=FuzzPipeline -fuzztime=$(or $(FUZZ_TIME),30s) .
-	go test -fuzz=FuzzMultiModule -fuzztime=$(or $(FUZZ_TIME),30s) .
+fuzz: $(FUZZ_NAMES)
+
+# Go exits successfully when -fuzz matches nothing, even in packages without tests.
+$(FUZZ_NAMES): package = $(dir $(filter %/$@,$(FUZZ_TARGETS)))
+$(FUZZ_NAMES):
+	@go test -json=false -list '^$@$$' $(package) | grep -Fx '$@' >/dev/null || { echo "Missing $@ in $(package)" >&2; exit 1; }
+	go test -run '^$$' -fuzz '^$@$$' -fuzztime=$(or $(FUZZ_TIME),30s) $(package)

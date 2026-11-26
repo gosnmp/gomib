@@ -14,25 +14,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - package: ./internal/lexer/
-            target: FuzzTokenize
-          - package: ./internal/parser/
-            target: FuzzParseModule
-          - package: ./internal/parser/
-            target: FuzzConstraintParsing
-          - package: ./internal/graph/
-            target: FuzzResolutionOrder
-          - package: ./mib/
-            target: FuzzParseOID
-          - package: ./mib/
-            target: FuzzFormatOID
-          - package: .
-            target: FuzzLower
-          - package: .
-            target: FuzzPipeline
-          - package: .
-            target: FuzzMultiModule
+        target:
+          - FuzzTokenize
+          - FuzzCSTParseModule
+          - FuzzCSTConstraintParsing
+          - FuzzResolutionOrder
+          - FuzzParseOID
+          - FuzzFormatOID
+          - FuzzParse
+          - FuzzPipeline
+          - FuzzMultiModule
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
@@ -46,4 +37,4 @@ jobs:
           restore-keys: |
             fuzz-corpus-${{ matrix.target }}-
       - name: Fuzz ${{ matrix.target }}
-        run: go test -fuzz=${{ matrix.target }} -fuzztime=30m ${{ matrix.package }}
+        run: make "${{ matrix.target }}" FUZZ_TIME=30m
